@@ -35,7 +35,7 @@ namespace Oxide.Plugins
 
         private PluginConfig _config;
         private readonly Dictionary<ulong, PlayerData> _playerData = new Dictionary<ulong, PlayerData>();
-        ${hasHomes ? 'private readonly Dictionary<ulong, float> _combatTimers = new Dictionary<ulong, float>();\n' : ''}
+        private readonly Dictionary<ulong, float> _combatTimers = new Dictionary<ulong, float>();
         ${config.permissions.map(p => `private const string Perm${p.key.split('.').pop()?.toUpperCase() || 'USE'} = "${p.key}";`).join('\n        ')}
 
         private class PlayerData
@@ -156,7 +156,7 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
-            Puts($"{className} v{Version} inicializado com sucesso!");
+            Puts($"{Name} v{Version} inicializado com sucesso!");
         }
 
         private void Unload()
@@ -165,7 +165,7 @@ namespace Oxide.Plugins
             {
                 CuiHelper.DestroyUi(player, "RustPlugin_MainCui");
             }` : ''}
-            Puts($"{className} descarregado com seguranca.");
+            Puts($"{Name} descarregado com seguranca.");
         }
 
         #endregion
