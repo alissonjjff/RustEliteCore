@@ -1,0 +1,6 @@
+{
+  "name": "Rust Plugin Studio & Generator",
+  "description": "Crie, personalize, teste no simulador in-game e baixe plugins C# completos para servidores Rust (Oxide / uMod & Carbon).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
