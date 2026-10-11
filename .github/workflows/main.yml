@@ -31,8 +31,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          npm install
-          npm install -D @tailwindcss/vite tailwindcss postcss autoprefixer
+          npm install --legacy-peer-deps
         
       - name: Build
         run: npm run build
@@ -48,4 +47,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
