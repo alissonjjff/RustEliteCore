@@ -29,8 +29,10 @@ jobs:
         with:
           node-version: 20
           
-      - name: Install dependencies
-        run: npm install
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm install -D @tailwindcss/vite tailwindcss postcss autoprefixer
         
       - name: Build
         run: npm run build
@@ -46,3 +48,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
