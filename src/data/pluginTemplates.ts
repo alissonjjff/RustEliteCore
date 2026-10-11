@@ -5,7 +5,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
     name: 'RustEliteCore',
     title: 'Rust Elite Core Suite',
     author: 'brtaskgamer',
-    version: '1.2.0',
+    version: '2.0.0',
     description: 'Plugin completo de utilidades essenciais para Rust: Kits com CUI, Homes & Teleporte com verificação de combate, Multiplicador de Coleta (Rates), AutoDoors inteligentes e Alertas de Raid.',
     resourceId: 'rust-elite-core',
 

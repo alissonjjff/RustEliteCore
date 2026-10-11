@@ -55,9 +55,15 @@ export default function App() {
               <span className="text-neutral-400">Rust Dedicated Protocol 2420</span>
             </div>
 
-            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-              {config.title} <span className="text-neutral-500 font-mono text-lg font-normal">v{config.version}</span>
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+                {config.title}
+              </h1>
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-mono font-bold tracking-wide flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                v{config.version} (Build Atualizada)
+              </span>
+            </div>
 
             <p className="text-xs lg:text-sm text-neutral-400 max-w-2xl leading-relaxed">
               {config.description}
