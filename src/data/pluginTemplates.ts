@@ -5,7 +5,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
     name: 'RustEliteCore',
     title: 'Rust Elite Core Suite',
     author: 'brtaskgamer',
-    version: '2.0.0',
+    version: '2.2.3',
     description: 'Plugin completo de utilidades essenciais para Rust: Kits com CUI, Homes & Teleporte com verificação de combate, Multiplicador de Coleta (Rates), AutoDoors inteligentes e Alertas de Raid.',
     resourceId: 'rust-elite-core',
 
@@ -64,7 +64,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
         name: 'VIP Elite',
         description: 'Equipamento tático premium para jogadores com permissão VIP.',
         cooldownSeconds: 1800,
-        permissionRequired: 'rustelite.vip',
+        permissionRequired: 'rustelitecore.vip',
         icon: 'shield',
         items: [
           { shortname: 'rifle.ak', name: 'Assault Rifle (AK-47)', amount: 1, container: 'belt' },
@@ -80,9 +80,9 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
     ],
 
     permissions: [
-      { key: 'rustelite.use', description: 'Permissão padrão para comandos de jogador (/kit, /home, /tpa)' },
-      { key: 'rustelite.vip', description: 'Permissão VIP (mais homes, kit VIP e multiplicador 5x)' },
-      { key: 'rustelite.admin', description: 'Acesso total administrativo e bypass de cooldowns' }
+      { key: 'rustelitecore.use', description: 'Permissão padrão para comandos de jogador (/kit, /home, /tpa)' },
+      { key: 'rustelitecore.vip', description: 'Permissão VIP (mais homes, kit VIP e multiplicador 5x)' },
+      { key: 'rustelitecore.admin', description: 'Acesso total administrativo e bypass de cooldowns' }
     ],
 
     cuiPrimaryColor: '0.81 0.26 0.17 0.95', // Rust orange

@@ -208,15 +208,16 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
   };
 
   const handleClaimKit = (kitId: string) => {
+    const targetKit = config.kits.find(k => k.id === kitId) || config.kits[0];
     if (kitCooldowns[kitId] && kitCooldowns[kitId] > 0) {
       soundEffects.playError();
-      addSystemChat(`<color=#e74c3c>[${config.name}]</color> Kit '${kitId}' em recarga! Aguarde mais ${kitCooldowns[kitId]} segundos.`);
+      addSystemChat(`<color=#e74c3c>[${config.name}]</color> Kit '${targetKit?.name || kitId}' em recarga! Aguarde mais ${kitCooldowns[kitId]} segundos.`);
       return;
     }
 
-    if (kitId === 'vip' && !isVipGranted) {
+    if (targetKit?.permissionRequired && !isVipGranted) {
       soundEffects.playError();
-      addSystemChat(`<color=#e74c3c>[${config.name}]</color> Você precisa da permissão <color=#f39c12>rustelite.vip</color>! Execute no console: oxide.grant user GamerBR rustelite.vip`);
+      addSystemChat(`<color=#e74c3c>[${config.name}]</color> Você precisa da permissão <color=#f39c12>rustelitecore.vip</color>! Execute no console: oxide.grant user GamerBR rustelitecore.vip`);
       return;
     }
 
@@ -224,16 +225,19 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
 
     if (kitId === 'starter') {
       setInventoryStats(prev => ({ ...prev, wood: prev.wood + 1000, stone: prev.stone + 1000 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: 120 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit STARTER resgatado! (+Machado, +Picareta, +1000 Madeira/Pedra)`);
+      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 120 }));
+      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit STARTER resgatado! (+Machado de Pedra, +Picareta de Pedra, +3 Bandagens, +1000 Madeira, +1000 Pedra)`);
     } else if (kitId === 'builder') {
       setInventoryStats(prev => ({ ...prev, wood: prev.wood + 5000, stone: prev.stone + 5000, metal: prev.metal + 2000 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: 600 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit BUILDER resgatado! (+Plano, +Martelo, +Recursos de Base)`);
+      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 600 }));
+      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit BUILDER PRO resgatado! (+Plano, +Martelo, +5000 Madeira, +5000 Pedra, +2000 Metal, +2 Portas de Metal, +2 Code Locks)`);
     } else if (kitId === 'vip') {
       setInventoryStats(prev => ({ ...prev, scrap: prev.scrap + 250 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: 1800 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit VIP ELITE resgatado! (+AK-47, +128 Munição 5.56, +Seringas, +250 Scrap)`);
+      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 1800 }));
+      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit VIP ELITE resgatado! (+AK-47, +128 Munição 5.56, +4 Seringas, +Máscara de Metal, +Colete de Metal, +Casaco, +Calça, +250 Scrap)`);
+    } else {
+      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 300 }));
+      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit ${targetKit.name} resgatado com sucesso!`);
     }
 
     setShowCuiMenu(false);

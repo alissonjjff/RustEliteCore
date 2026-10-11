@@ -36,7 +36,10 @@ namespace Oxide.Plugins
         private PluginConfig _config;
         private readonly Dictionary<ulong, PlayerData> _playerData = new Dictionary<ulong, PlayerData>();
         private readonly Dictionary<ulong, float> _combatTimers = new Dictionary<ulong, float>();
-        ${config.permissions.map(p => `private const string Perm${p.key.split('.').pop()?.toUpperCase() || 'USE'} = "${p.key}";`).join('\n        ')}
+
+        private const string PermUSE = "${className.toLowerCase()}.use";
+        private const string PermVIP = "${className.toLowerCase()}.vip";
+        private const string PermADMIN = "${className.toLowerCase()}.admin";
 
         private class PlayerData
         {
@@ -63,7 +66,42 @@ namespace Oxide.Plugins
             public AutoDoorSettings AutoDoors { get; set; } = new AutoDoorSettings();\n` : ''}
             ${hasRaid ? `[JsonProperty(PropertyName = "ConfiguracoesRaidAlarm")]
             public RaidSettings Raid { get; set; } = new RaidSettings();\n` : ''}
+            ${hasKits ? `[JsonProperty(PropertyName = "ListaDeKits")]
+            public List<KitConfig> Kits { get; set; } = new List<KitConfig>();\n` : ''}
         }
+
+        ${hasKits ? `public class KitConfig
+        {
+            [JsonProperty("Id")]
+            public string Id { get; set; }
+
+            [JsonProperty("Nome")]
+            public string Name { get; set; }
+
+            [JsonProperty("Descricao")]
+            public string Description { get; set; }
+
+            [JsonProperty("CooldownSegundos")]
+            public int CooldownSeconds { get; set; }
+
+            [JsonProperty("PermissaoRequerida")]
+            public string PermissionRequired { get; set; }
+
+            [JsonProperty("Itens")]
+            public List<KitItemConfig> Items { get; set; } = new List<KitItemConfig>();
+        }
+
+        public class KitItemConfig
+        {
+            [JsonProperty("Shortname")]
+            public string Shortname { get; set; }
+
+            [JsonProperty("Nome")]
+            public string Name { get; set; }
+
+            [JsonProperty("Quantidade")]
+            public int Amount { get; set; }
+        }` : ''}
 
         private class GeneralSettings
         {
@@ -72,6 +110,21 @@ namespace Oxide.Plugins
 
             [JsonProperty("AtivarNotificacoesSonoras")]
             public bool EnableSoundEffects { get; set; } = true;
+
+            [JsonProperty("AtivarModuloKits")]
+            public bool EnableKits { get; set; } = ${config.enableKits ? 'true' : 'false'};
+
+            [JsonProperty("AtivarModuloHomes")]
+            public bool EnableHomes { get; set; } = ${config.enableHomes ? 'true' : 'false'};
+
+            [JsonProperty("AtivarModuloMultiplicadorColeta")]
+            public bool EnableGather { get; set; } = ${config.enableGatherMultiplier ? 'true' : 'false'};
+
+            [JsonProperty("AtivarModuloAutoDoors")]
+            public bool EnableAutoDoors { get; set; } = ${config.enableAutoDoors ? 'true' : 'false'};
+
+            [JsonProperty("AtivarModuloAlarmeRaid")]
+            public bool EnableRaidAlarm { get; set; } = ${config.enableRaidAlerts ? 'true' : 'false'};
         }
 
         ${hasGather ? `private class GatherSettings
@@ -122,7 +175,10 @@ namespace Oxide.Plugins
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Criando novo arquivo de configuracao para " + Name + "...");
-            _config = new PluginConfig();
+            _config = new PluginConfig
+            {
+                ${hasKits ? `Kits = GetDefaultKits()` : ''}
+            };
         }
 
         protected override void LoadConfig()
@@ -137,8 +193,53 @@ namespace Oxide.Plugins
             {
                 LoadDefaultConfig();
             }
+
+            ${hasKits ? `SyncDefaultKits();\n` : ''}
             SaveConfig();
         }
+
+        ${hasKits ? `private void SyncDefaultKits()
+        {
+            if (_config == null) return;
+            if (_config.Kits == null) _config.Kits = new List<KitConfig>();
+
+            List<KitConfig> defaults = GetDefaultKits();
+            bool modified = false;
+
+            foreach (KitConfig defKit in defaults)
+            {
+                if (!_config.Kits.Any(k => k.Id != null && k.Id.Equals(defKit.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _config.Kits.Add(defKit);
+                    modified = true;
+                    Puts($"[Config] Novo kit '{defKit.Name}' adicionado automaticamente ao arquivo de configuracao JSON!");
+                }
+            }
+
+            if (modified)
+            {
+                SaveConfig();
+            }
+        }
+
+        private List<KitConfig> GetDefaultKits()
+        {
+            return new List<KitConfig>
+            {
+                ${config.kits.map(k => `new KitConfig
+                {
+                    Id = "${k.id}",
+                    Name = "${k.name.replace(/"/g, '\\"')}",
+                    Description = "${k.description.replace(/"/g, '\\"')}",
+                    CooldownSeconds = ${k.cooldownSeconds},
+                    PermissionRequired = "${k.permissionRequired || ''}",
+                    Items = new List<KitItemConfig>
+                    {
+                        ${k.items.map(it => `new KitItemConfig { Shortname = "${it.shortname}", Name = "${it.name.replace(/"/g, '\\"')}", Amount = ${it.amount} }`).join(',\n                        ')}
+                    }
+                }`).join(',\n                ')}
+            };
+        }` : ''}
 
         protected override void SaveConfig() => Config.WriteObject(_config, true);
 
@@ -148,11 +249,31 @@ namespace Oxide.Plugins
 
         private void Init()
         {
-            // Registro de permissoes Oxide
-            ${config.permissions.map(p => `permission.RegisterPermission("${p.key}", this);`).join('\n            ')}
+            // Registro de permissoes oficiais do plugin (reconhecidas pelo Oxide e gerenciadores de permissao)
+            permission.RegisterPermission(PermUSE, this);
+            permission.RegisterPermission(PermVIP, this);
+            permission.RegisterPermission(PermADMIN, this);
+
+            // Registro de alias legado/simplificado
+            if (PermUSE != "rustelite.use")
+            {
+                permission.RegisterPermission("rustelite.use", this);
+                permission.RegisterPermission("rustelite.vip", this);
+                permission.RegisterPermission("rustelite.admin", this);
+            }
 
             RegisterMessages();
         }
+
+        private bool HasPermission(BasePlayer player, string perm)
+        {
+            if (player == null) return false;
+            if (permission.UserHasPermission(player.UserIDString, perm)) return true;
+            if (perm.Contains(".") && permission.UserHasPermission(player.UserIDString, perm.Replace("${className.toLowerCase()}.", "rustelite."))) return true;
+            return false;
+        }
+
+        private bool IsVip(BasePlayer player) => HasPermission(player, PermVIP);
 
         private void OnServerInitialized()
         {
@@ -216,7 +337,13 @@ namespace Oxide.Plugins
         ${hasHomes ? `[ChatCommand("sethome")]
         private void CmdSetHome(BasePlayer player, string command, string[] args)
         {
-            if (!permission.UserHasPermission(player.UserIDString, "rustelite.use"))
+            if (!_config.General.EnableHomes)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de homes esta temporariamente desativado no servidor.");
+                return;
+            }
+
+            if (!HasPermission(player, PermUSE))
             {
                 SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
                 return;
@@ -228,10 +355,10 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string homeName = args[0].ToLower();
+            string homeName = args[0].ToLowerInvariant();
             PlayerData data = GetOrCreatePlayerData(player.userID);
 
-            bool isVip = permission.UserHasPermission(player.UserIDString, "rustelite.vip");
+            bool isVip = IsVip(player);
             int maxAllowed = isVip ? _config.Homes.MaxHomesVip : _config.Homes.MaxHomesDefault;
 
             if (data.Homes.Count >= maxAllowed && !data.Homes.ContainsKey(homeName))
@@ -248,6 +375,12 @@ namespace Oxide.Plugins
         [ChatCommand("home")]
         private void CmdHome(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableHomes)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de homes esta temporariamente desativado no servidor.");
+                return;
+            }
+
             if (args.Length == 0)
             {
                 PlayerData data = GetOrCreatePlayerData(player.userID);
@@ -261,7 +394,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string homeName = args[0].ToLower();
+            string homeName = args[0].ToLowerInvariant();
             PlayerData pData = GetOrCreatePlayerData(player.userID);
 
             if (!pData.Homes.TryGetValue(homeName, out Vector3 targetPos))
@@ -291,6 +424,12 @@ namespace Oxide.Plugins
         ${hasKits ? `[ChatCommand("kit")]
         private void CmdKit(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableKits)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de kits esta temporariamente desativado no servidor.");
+                return;
+            }
+
             if (args.Length == 0)
             {
                 ${hasCui ? 'OpenKitCui(player);' : `
@@ -299,13 +438,19 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string kitName = args[0].ToLower();
+            string kitName = args[0].ToLowerInvariant();
             ClaimKit(player, kitName);
         }` : ''}
 
         ${hasAutoDoors ? `[ChatCommand("ad")]
         private void CmdAutoDoor(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableAutoDoors)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de AutoDoors esta desativado no servidor.");
+                return;
+            }
+
             PlayerData data = GetOrCreatePlayerData(player.userID);
             if (args.Length > 0 && float.TryParse(args[0], out float delay))
             {
@@ -328,10 +473,12 @@ namespace Oxide.Plugins
         ${hasGather ? `// Multiplicador inteligente de coleta
         private void OnDispenserGather(ResourceDispenser dispenser, BaseEntity entity, Item item)
         {
+            if (!_config.General.EnableGather) return;
+
             BasePlayer player = entity as BasePlayer;
             if (player == null || item == null) return;
 
-            bool isVip = permission.UserHasPermission(player.UserIDString, "rustelite.vip");
+            bool isVip = IsVip(player);
             float multiplier = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
 
             item.amount = (int)(item.amount * multiplier);
@@ -353,6 +500,7 @@ namespace Oxide.Plugins
         ${hasAutoDoors ? `// Fechamento automatico de portas
         private void OnDoorOpened(Door door, BasePlayer player)
         {
+            if (!_config.General.EnableAutoDoors) return;
             if (door == null || player == null) return;
             PlayerData data = GetOrCreatePlayerData(player.userID);
             if (!data.AutoDoorEnabled) return;
@@ -378,7 +526,7 @@ namespace Oxide.Plugins
             }
 
             ${hasRaid ? `// Deteccao de Raid em bases
-            if (entity is BuildingBlock && (info.damageTypes.Has(Rust.DamageType.Explosion)))
+            if (_config.General.EnableRaidAlarm && entity is BuildingBlock && (info.damageTypes.Has(Rust.DamageType.Explosion)))
             {
                 BasePlayer owner = BasePlayer.FindByID(entity.OwnerID);
                 if (owner != null && owner.IsConnected)
@@ -391,10 +539,40 @@ namespace Oxide.Plugins
 
         #endregion
 
+        #region Console Commands (CUI Callbacks)
+
+        [ConsoleCommand("rustelite.claimkit")]
+        private void ConsoleCmdClaimKit(ConsoleSystem.Arg arg)
+        {
+            BasePlayer player = arg.Connection?.player as BasePlayer;
+            if (player == null) player = arg.Player();
+            if (player == null) return;
+
+            string kitName = (arg.GetString(0, string.Empty) ?? string.Empty).ToLowerInvariant();
+            if (string.IsNullOrEmpty(kitName)) return;
+
+            ClaimKit(player, kitName);
+            CuiHelper.DestroyUi(player, "RustPlugin_MainCui");
+        }
+
+        [ConsoleCommand("kit.claim")]
+        private void ConsoleCmdKitClaim(ConsoleSystem.Arg arg)
+        {
+            ConsoleCmdClaimKit(arg);
+        }
+
+        #endregion
+
         #region Kits Logic & CUI Menu
 
         private void ClaimKit(BasePlayer player, string kitId)
         {
+            if (!_config.General.EnableKits)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de kits esta temporariamente desativado no servidor.");
+                return;
+            }
+
             PlayerData data = GetOrCreatePlayerData(player.userID);
             double now = GrabCurrentTime();
 
@@ -405,36 +583,57 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (kitId == "starter")
+            // 1. Tenta carregar da lista de kits da configuracao JSON (permite editar ou criar novos kits diretamente no arquivo oxide/config/)
+            KitConfig cfgKit = _config.Kits != null ? _config.Kits.FirstOrDefault(k => (k.Id != null && k.Id.Equals(kitId, StringComparison.OrdinalIgnoreCase)) || (k.Name != null && k.Name.Equals(kitId, StringComparison.OrdinalIgnoreCase))) : null;
+
+            string kitDisplayName = cfgKit?.Name;
+
+            if (cfgKit != null)
             {
-                player.inventory.GiveItem(ItemManager.CreateByName("stone.hatchet", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone.pickaxe", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("wood", 1000));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone", 1000));
-                data.KitCooldowns[kitId] = now + 120;
-            }
-            else if (kitId == "builder")
-            {
-                player.inventory.GiveItem(ItemManager.CreateByName("building.planner", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("hammer", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("wood", 5000));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone", 5000));
-                data.KitCooldowns[kitId] = now + 600;
-            }
-            else if (kitId == "vip")
-            {
-                if (!permission.UserHasPermission(player.UserIDString, "rustelite.vip"))
+                if (!string.IsNullOrEmpty(cfgKit.PermissionRequired) && !HasPermission(player, cfgKit.PermissionRequired))
                 {
                     SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
                     return;
                 }
-                player.inventory.GiveItem(ItemManager.CreateByName("rifle.ak", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("ammo.rifle", 128));
-                player.inventory.GiveItem(ItemManager.CreateByName("syringe.medical", 4));
-                data.KitCooldowns[kitId] = now + 1800;
+
+                if (cfgKit.Items != null)
+                {
+                    foreach (KitItemConfig item in cfgKit.Items)
+                    {
+                        player.inventory.GiveItem(ItemManager.CreateByName(item.Shortname, item.Amount));
+                    }
+                }
+
+                data.KitCooldowns[kitId] = now + cfgKit.CooldownSeconds;
+            }
+            else
+            {
+                ${config.kits.map((kit, index) => `
+                ${index === 0 ? 'if' : 'else if'} (kitId.Equals("${kit.id}", StringComparison.OrdinalIgnoreCase) || kitId.Equals("${kit.name.toLowerCase().replace(/"/g, '\\"')}", StringComparison.OrdinalIgnoreCase))
+                {
+                    kitDisplayName = "${kit.name.replace(/"/g, '\\"')}";
+                    ${kit.permissionRequired ? `if (!IsVip(player))
+                    {
+                        SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
+                        return;
+                    }` : ''}
+                    ${kit.items.map(item => `player.inventory.GiveItem(ItemManager.CreateByName("${item.shortname}", ${item.amount}));`).join('\n                    ')}
+                    data.KitCooldowns[kitId] = now + ${kit.cooldownSeconds};
+                }`).join('\n')}
+                else
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} Kit nao encontrado.");
+                    return;
+                }
             }
 
-            SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("KitClaimed", player, kitId.ToUpper())}");
+            if (string.IsNullOrEmpty(kitDisplayName))
+            {
+                kitDisplayName = kitId.ToUpper();
+            }
+
+            SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("KitClaimed", player, kitDisplayName)}");
+            Effect.server.Run("assets/bundled/prefabs/fx/notice/loot.drag.drop.fx.prefab", player.transform.position);
         }
 
         ${hasCui ? `public void OpenKitCui(BasePlayer player)
@@ -447,7 +646,7 @@ namespace Oxide.Plugins
             container.Add(new CuiPanel
             {
                 Image = { Color = "${config.cuiSecondaryColor}" },
-                RectTransform = { AnchorMin = "0.2 0.2", AnchorMax = "0.8 0.8" },
+                RectTransform = { AnchorMin = "0.15 0.15", AnchorMax = "0.85 0.85" },
                 CursorEnabled = true
             }, "Overlay", "RustPlugin_MainCui");
 
@@ -464,27 +663,22 @@ namespace Oxide.Plugins
                 RectTransform = { AnchorMin = "0 0", AnchorMax = "1 1" }
             }, "RustPlugin_Header");
 
-            // Botoes dos kits
-            container.Add(new CuiButton
+            // Botoes dos kits gerados dinamicamente com comando de console registrado
+            ${config.kits.map((kit, index) => {
+              const col = index % 3;
+              const row = Math.floor(index / 3);
+              const minX = (0.05 + col * 0.32).toFixed(2);
+              const maxX = (0.05 + col * 0.32 + 0.28).toFixed(2);
+              const minY = (0.58 - row * 0.24).toFixed(2);
+              const maxY = (0.78 - row * 0.24).toFixed(2);
+              const color = kit.permissionRequired ? '0.7 0.3 0.1 0.9' : (index % 2 === 0 ? '0.2 0.5 0.3 0.9' : '0.2 0.4 0.6 0.9');
+              return `container.Add(new CuiButton
             {
-                Button = { Command = "kit starter", Color = "0.2 0.5 0.3 0.9" },
-                RectTransform = { AnchorMin = "0.1 0.6", AnchorMax = "0.4 0.75" },
-                Text = { Text = "RESGATAR STARTER\\n<size=11>Kit Basico</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
-            }, "RustPlugin_MainCui");
-
-            container.Add(new CuiButton
-            {
-                Button = { Command = "kit builder", Color = "0.2 0.4 0.6 0.9" },
-                RectTransform = { AnchorMin = "0.6 0.6", AnchorMax = "0.9 0.75" },
-                Text = { Text = "RESGATAR BUILDER\\n<size=11>Construcao</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
-            }, "RustPlugin_MainCui");
-
-            container.Add(new CuiButton
-            {
-                Button = { Command = "kit vip", Color = "0.7 0.3 0.1 0.9" },
-                RectTransform = { AnchorMin = "0.35 0.35", AnchorMax = "0.65 0.5" },
-                Text = { Text = "RESGATAR VIP ELITE\\n<size=11>Exclusivo VIP</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
-            }, "RustPlugin_MainCui");
+                Button = { Command = "rustelite.claimkit ${kit.id}", Color = "${color}" },
+                RectTransform = { AnchorMin = "${minX} ${minY}", AnchorMax = "${maxX} ${maxY}" },
+                Text = { Text = "RESGATAR ${kit.name.toUpperCase()}\\n<size=10>${kit.description.replace(/"/g, '\\"')}</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
+            }, "RustPlugin_MainCui");`;
+            }).join('\n\n            ')}
 
             // Botao Fechar
             container.Add(new CuiButton
@@ -526,7 +720,12 @@ export function generatePluginConfigJson(config: PluginConfig): string {
   const cfg = {
     ConfiguracoesGerais: {
       PrefixoChat: `<color=#ce422b>[${config.name}]</color>`,
-      AtivarNotificacoesSonoras: true
+      AtivarNotificacoesSonoras: true,
+      AtivarModuloKits: config.enableKits,
+      AtivarModuloHomes: config.enableHomes,
+      AtivarModuloMultiplicadorColeta: config.enableGatherMultiplier,
+      AtivarModuloAutoDoors: config.enableAutoDoors,
+      AtivarModuloAlarmeRaid: config.enableRaidAlerts
     },
     MultiplicadoresDeColeta: {
       MultiplicadorPadrao: config.gatherMultiplier,
@@ -546,7 +745,19 @@ export function generatePluginConfigJson(config: PluginConfig): string {
     ConfiguracoesRaidAlarm: {
       DiscordWebhookUrl: config.discordWebhookUrl,
       RaioDeteccaoExplosaoMetros: 40.0
-    }
+    },
+    ListaDeKits: config.kits.map(k => ({
+      Id: k.id,
+      Nome: k.name,
+      Descricao: k.description,
+      CooldownSegundos: k.cooldownSeconds,
+      PermissaoRequerida: k.permissionRequired || "",
+      Itens: k.items.map(it => ({
+        Shortname: it.shortname,
+        Nome: it.name,
+        Quantidade: it.amount
+      }))
+    }))
   };
 
   return JSON.stringify(cfg, null, 2);

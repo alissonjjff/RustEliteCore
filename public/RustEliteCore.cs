@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("RustEliteCore", "brtaskgamer", "2.0.0")]
+    [Info("RustEliteCore", "brtaskgamer", "2.2.3")]
     [Description("Plugin completo de utilidades essenciais para Rust: Kits com CUI, Homes & Teleporte com verificação de combate, Multiplicador de Coleta (Rates), AutoDoors inteligentes e Alertas de Raid.")]
     public class RustEliteCore : RustPlugin
     {
@@ -26,9 +26,10 @@ namespace Oxide.Plugins
         private PluginConfig _config;
         private readonly Dictionary<ulong, PlayerData> _playerData = new Dictionary<ulong, PlayerData>();
         private readonly Dictionary<ulong, float> _combatTimers = new Dictionary<ulong, float>();
-        private const string PermUSE = "rustelite.use";
-        private const string PermVIP = "rustelite.vip";
-        private const string PermADMIN = "rustelite.admin";
+
+        private const string PermUSE = "rustelitecore.use";
+        private const string PermVIP = "rustelitecore.vip";
+        private const string PermADMIN = "rustelitecore.admin";
 
         private class PlayerData
         {
@@ -59,6 +60,42 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "ConfiguracoesRaidAlarm")]
             public RaidSettings Raid { get; set; } = new RaidSettings();
 
+            [JsonProperty(PropertyName = "ListaDeKits")]
+            public List<KitConfig> Kits { get; set; } = new List<KitConfig>();
+
+        }
+
+        public class KitConfig
+        {
+            [JsonProperty("Id")]
+            public string Id { get; set; }
+
+            [JsonProperty("Nome")]
+            public string Name { get; set; }
+
+            [JsonProperty("Descricao")]
+            public string Description { get; set; }
+
+            [JsonProperty("CooldownSegundos")]
+            public int CooldownSeconds { get; set; }
+
+            [JsonProperty("PermissaoRequerida")]
+            public string PermissionRequired { get; set; }
+
+            [JsonProperty("Itens")]
+            public List<KitItemConfig> Items { get; set; } = new List<KitItemConfig>();
+        }
+
+        public class KitItemConfig
+        {
+            [JsonProperty("Shortname")]
+            public string Shortname { get; set; }
+
+            [JsonProperty("Nome")]
+            public string Name { get; set; }
+
+            [JsonProperty("Quantidade")]
+            public int Amount { get; set; }
         }
 
         private class GeneralSettings
@@ -68,6 +105,21 @@ namespace Oxide.Plugins
 
             [JsonProperty("AtivarNotificacoesSonoras")]
             public bool EnableSoundEffects { get; set; } = true;
+
+            [JsonProperty("AtivarModuloKits")]
+            public bool EnableKits { get; set; } = true;
+
+            [JsonProperty("AtivarModuloHomes")]
+            public bool EnableHomes { get; set; } = true;
+
+            [JsonProperty("AtivarModuloMultiplicadorColeta")]
+            public bool EnableGather { get; set; } = true;
+
+            [JsonProperty("AtivarModuloAutoDoors")]
+            public bool EnableAutoDoors { get; set; } = true;
+
+            [JsonProperty("AtivarModuloAlarmeRaid")]
+            public bool EnableRaidAlarm { get; set; } = true;
         }
 
         private class GatherSettings
@@ -118,7 +170,10 @@ namespace Oxide.Plugins
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Criando novo arquivo de configuracao para " + Name + "...");
-            _config = new PluginConfig();
+            _config = new PluginConfig
+            {
+                Kits = GetDefaultKits()
+            };
         }
 
         protected override void LoadConfig()
@@ -133,7 +188,94 @@ namespace Oxide.Plugins
             {
                 LoadDefaultConfig();
             }
+
+            SyncDefaultKits();
+
             SaveConfig();
+        }
+
+        private void SyncDefaultKits()
+        {
+            if (_config == null) return;
+            if (_config.Kits == null) _config.Kits = new List<KitConfig>();
+
+            List<KitConfig> defaults = GetDefaultKits();
+            bool modified = false;
+
+            foreach (KitConfig defKit in defaults)
+            {
+                if (!_config.Kits.Any(k => k.Id != null && k.Id.Equals(defKit.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _config.Kits.Add(defKit);
+                    modified = true;
+                    Puts($"[Config] Novo kit '{defKit.Name}' adicionado automaticamente ao arquivo de configuracao JSON!");
+                }
+            }
+
+            if (modified)
+            {
+                SaveConfig();
+            }
+        }
+
+        private List<KitConfig> GetDefaultKits()
+        {
+            return new List<KitConfig>
+            {
+                new KitConfig
+                {
+                    Id = "starter",
+                    Name = "Starter",
+                    Description = "Kit inicial essencial para sobreviver após o wipe.",
+                    CooldownSeconds = 120,
+                    PermissionRequired = "",
+                    Items = new List<KitItemConfig>
+                    {
+                        new KitItemConfig { Shortname = "stone.hatchet", Name = "Machado de Pedra", Amount = 1 },
+                        new KitItemConfig { Shortname = "stone.pickaxe", Name = "Picareta de Pedra", Amount = 1 },
+                        new KitItemConfig { Shortname = "bandage", Name = "Bandagem", Amount = 3 },
+                        new KitItemConfig { Shortname = "wood", Name = "Madeira", Amount = 1000 },
+                        new KitItemConfig { Shortname = "stone", Name = "Pedra", Amount = 1000 }
+                    }
+                },
+                new KitConfig
+                {
+                    Id = "builder",
+                    Name = "Builder Pro",
+                    Description = "Recursos e ferramentas de construção de bases.",
+                    CooldownSeconds = 600,
+                    PermissionRequired = "",
+                    Items = new List<KitItemConfig>
+                    {
+                        new KitItemConfig { Shortname = "building.planner", Name = "Plano de Construção", Amount = 1 },
+                        new KitItemConfig { Shortname = "hammer", Name = "Martelo", Amount = 1 },
+                        new KitItemConfig { Shortname = "wood", Name = "Madeira", Amount = 5000 },
+                        new KitItemConfig { Shortname = "stone", Name = "Pedra", Amount = 5000 },
+                        new KitItemConfig { Shortname = "metal.fragments", Name = "Fragmentos de Metal", Amount = 2000 },
+                        new KitItemConfig { Shortname = "door.hinged.metal", Name = "Porta de Metal", Amount = 2 },
+                        new KitItemConfig { Shortname = "lock.code", Name = "Code Lock", Amount = 2 }
+                    }
+                },
+                new KitConfig
+                {
+                    Id = "vip",
+                    Name = "VIP Elite",
+                    Description = "Equipamento tático premium para jogadores com permissão VIP.",
+                    CooldownSeconds = 1800,
+                    PermissionRequired = "rustelitecore.vip",
+                    Items = new List<KitItemConfig>
+                    {
+                        new KitItemConfig { Shortname = "rifle.ak", Name = "Assault Rifle (AK-47)", Amount = 1 },
+                        new KitItemConfig { Shortname = "ammo.rifle", Name = "Munição 5.56", Amount = 128 },
+                        new KitItemConfig { Shortname = "syringe.medical", Name = "Seringa Médica", Amount = 4 },
+                        new KitItemConfig { Shortname = "metal.facemask", Name = "Máscara Facial de Metal", Amount = 1 },
+                        new KitItemConfig { Shortname = "metal.plate.torso", Name = "Colete de Metal", Amount = 1 },
+                        new KitItemConfig { Shortname = "hoodie", Name = "Casaco Militar", Amount = 1 },
+                        new KitItemConfig { Shortname = "pants", Name = "Calça Tática", Amount = 1 },
+                        new KitItemConfig { Shortname = "scrap", Name = "Scrap (Sucata)", Amount = 250 }
+                    }
+                }
+            };
         }
 
         protected override void SaveConfig() => Config.WriteObject(_config, true);
@@ -144,13 +286,31 @@ namespace Oxide.Plugins
 
         private void Init()
         {
-            // Registro de permissoes Oxide
-            permission.RegisterPermission("rustelite.use", this);
-            permission.RegisterPermission("rustelite.vip", this);
-            permission.RegisterPermission("rustelite.admin", this);
+            // Registro de permissoes oficiais do plugin (reconhecidas pelo Oxide e gerenciadores de permissao)
+            permission.RegisterPermission(PermUSE, this);
+            permission.RegisterPermission(PermVIP, this);
+            permission.RegisterPermission(PermADMIN, this);
+
+            // Registro de alias legado/simplificado
+            if (PermUSE != "rustelite.use")
+            {
+                permission.RegisterPermission("rustelite.use", this);
+                permission.RegisterPermission("rustelite.vip", this);
+                permission.RegisterPermission("rustelite.admin", this);
+            }
 
             RegisterMessages();
         }
+
+        private bool HasPermission(BasePlayer player, string perm)
+        {
+            if (player == null) return false;
+            if (permission.UserHasPermission(player.UserIDString, perm)) return true;
+            if (perm.Contains(".") && permission.UserHasPermission(player.UserIDString, perm.Replace("rustelitecore.", "rustelite."))) return true;
+            return false;
+        }
+
+        private bool IsVip(BasePlayer player) => HasPermission(player, PermVIP);
 
         private void OnServerInitialized()
         {
@@ -214,7 +374,13 @@ namespace Oxide.Plugins
         [ChatCommand("sethome")]
         private void CmdSetHome(BasePlayer player, string command, string[] args)
         {
-            if (!permission.UserHasPermission(player.UserIDString, "rustelite.use"))
+            if (!_config.General.EnableHomes)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de homes esta temporariamente desativado no servidor.");
+                return;
+            }
+
+            if (!HasPermission(player, PermUSE))
             {
                 SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
                 return;
@@ -226,10 +392,10 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string homeName = args[0].ToLower();
+            string homeName = args[0].ToLowerInvariant();
             PlayerData data = GetOrCreatePlayerData(player.userID);
 
-            bool isVip = permission.UserHasPermission(player.UserIDString, "rustelite.vip");
+            bool isVip = IsVip(player);
             int maxAllowed = isVip ? _config.Homes.MaxHomesVip : _config.Homes.MaxHomesDefault;
 
             if (data.Homes.Count >= maxAllowed && !data.Homes.ContainsKey(homeName))
@@ -246,6 +412,12 @@ namespace Oxide.Plugins
         [ChatCommand("home")]
         private void CmdHome(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableHomes)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de homes esta temporariamente desativado no servidor.");
+                return;
+            }
+
             if (args.Length == 0)
             {
                 PlayerData data = GetOrCreatePlayerData(player.userID);
@@ -259,7 +431,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string homeName = args[0].ToLower();
+            string homeName = args[0].ToLowerInvariant();
             PlayerData pData = GetOrCreatePlayerData(player.userID);
 
             if (!pData.Homes.TryGetValue(homeName, out Vector3 targetPos))
@@ -289,19 +461,31 @@ namespace Oxide.Plugins
         [ChatCommand("kit")]
         private void CmdKit(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableKits)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de kits esta temporariamente desativado no servidor.");
+                return;
+            }
+
             if (args.Length == 0)
             {
                 OpenKitCui(player);
                 return;
             }
 
-            string kitName = args[0].ToLower();
+            string kitName = args[0].ToLowerInvariant();
             ClaimKit(player, kitName);
         }
 
         [ChatCommand("ad")]
         private void CmdAutoDoor(BasePlayer player, string command, string[] args)
         {
+            if (!_config.General.EnableAutoDoors)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de AutoDoors esta desativado no servidor.");
+                return;
+            }
+
             PlayerData data = GetOrCreatePlayerData(player.userID);
             if (args.Length > 0 && float.TryParse(args[0], out float delay))
             {
@@ -324,10 +508,12 @@ namespace Oxide.Plugins
         // Multiplicador inteligente de coleta
         private void OnDispenserGather(ResourceDispenser dispenser, BaseEntity entity, Item item)
         {
+            if (!_config.General.EnableGather) return;
+
             BasePlayer player = entity as BasePlayer;
             if (player == null || item == null) return;
 
-            bool isVip = permission.UserHasPermission(player.UserIDString, "rustelite.vip");
+            bool isVip = IsVip(player);
             float multiplier = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
 
             item.amount = (int)(item.amount * multiplier);
@@ -349,6 +535,7 @@ namespace Oxide.Plugins
         // Fechamento automatico de portas
         private void OnDoorOpened(Door door, BasePlayer player)
         {
+            if (!_config.General.EnableAutoDoors) return;
             if (door == null || player == null) return;
             PlayerData data = GetOrCreatePlayerData(player.userID);
             if (!data.AutoDoorEnabled) return;
@@ -374,7 +561,7 @@ namespace Oxide.Plugins
             }
 
             // Deteccao de Raid em bases
-            if (entity is BuildingBlock && (info.damageTypes.Has(Rust.DamageType.Explosion)))
+            if (_config.General.EnableRaidAlarm && entity is BuildingBlock && (info.damageTypes.Has(Rust.DamageType.Explosion)))
             {
                 BasePlayer owner = BasePlayer.FindByID(entity.OwnerID);
                 if (owner != null && owner.IsConnected)
@@ -387,10 +574,40 @@ namespace Oxide.Plugins
 
         #endregion
 
+        #region Console Commands (CUI Callbacks)
+
+        [ConsoleCommand("rustelite.claimkit")]
+        private void ConsoleCmdClaimKit(ConsoleSystem.Arg arg)
+        {
+            BasePlayer player = arg.Connection?.player as BasePlayer;
+            if (player == null) player = arg.Player();
+            if (player == null) return;
+
+            string kitName = (arg.GetString(0, string.Empty) ?? string.Empty).ToLowerInvariant();
+            if (string.IsNullOrEmpty(kitName)) return;
+
+            ClaimKit(player, kitName);
+            CuiHelper.DestroyUi(player, "RustPlugin_MainCui");
+        }
+
+        [ConsoleCommand("kit.claim")]
+        private void ConsoleCmdKitClaim(ConsoleSystem.Arg arg)
+        {
+            ConsoleCmdClaimKit(arg);
+        }
+
+        #endregion
+
         #region Kits Logic & CUI Menu
 
         private void ClaimKit(BasePlayer player, string kitId)
         {
+            if (!_config.General.EnableKits)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de kits esta temporariamente desativado no servidor.");
+                return;
+            }
+
             PlayerData data = GetOrCreatePlayerData(player.userID);
             double now = GrabCurrentTime();
 
@@ -401,36 +618,90 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (kitId == "starter")
+            // 1. Tenta carregar da lista de kits da configuracao JSON (permite editar ou criar novos kits diretamente no arquivo oxide/config/)
+            KitConfig cfgKit = _config.Kits != null ? _config.Kits.FirstOrDefault(k => (k.Id != null && k.Id.Equals(kitId, StringComparison.OrdinalIgnoreCase)) || (k.Name != null && k.Name.Equals(kitId, StringComparison.OrdinalIgnoreCase))) : null;
+
+            string kitDisplayName = cfgKit?.Name;
+
+            if (cfgKit != null)
             {
-                player.inventory.GiveItem(ItemManager.CreateByName("stone.hatchet", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone.pickaxe", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("wood", 1000));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone", 1000));
-                data.KitCooldowns[kitId] = now + 120;
-            }
-            else if (kitId == "builder")
-            {
-                player.inventory.GiveItem(ItemManager.CreateByName("building.planner", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("hammer", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("wood", 5000));
-                player.inventory.GiveItem(ItemManager.CreateByName("stone", 5000));
-                data.KitCooldowns[kitId] = now + 600;
-            }
-            else if (kitId == "vip")
-            {
-                if (!permission.UserHasPermission(player.UserIDString, "rustelite.vip"))
+                if (!string.IsNullOrEmpty(cfgKit.PermissionRequired) && !HasPermission(player, cfgKit.PermissionRequired))
                 {
                     SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
                     return;
                 }
-                player.inventory.GiveItem(ItemManager.CreateByName("rifle.ak", 1));
-                player.inventory.GiveItem(ItemManager.CreateByName("ammo.rifle", 128));
-                player.inventory.GiveItem(ItemManager.CreateByName("syringe.medical", 4));
-                data.KitCooldowns[kitId] = now + 1800;
+
+                if (cfgKit.Items != null)
+                {
+                    foreach (KitItemConfig item in cfgKit.Items)
+                    {
+                        player.inventory.GiveItem(ItemManager.CreateByName(item.Shortname, item.Amount));
+                    }
+                }
+
+                data.KitCooldowns[kitId] = now + cfgKit.CooldownSeconds;
+            }
+            else
+            {
+                
+                if (kitId.Equals("starter", StringComparison.OrdinalIgnoreCase) || kitId.Equals("starter", StringComparison.OrdinalIgnoreCase))
+                {
+                    kitDisplayName = "Starter";
+                    
+                    player.inventory.GiveItem(ItemManager.CreateByName("stone.hatchet", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("stone.pickaxe", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("bandage", 3));
+                    player.inventory.GiveItem(ItemManager.CreateByName("wood", 1000));
+                    player.inventory.GiveItem(ItemManager.CreateByName("stone", 1000));
+                    data.KitCooldowns[kitId] = now + 120;
+                }
+
+                else if (kitId.Equals("builder", StringComparison.OrdinalIgnoreCase) || kitId.Equals("builder pro", StringComparison.OrdinalIgnoreCase))
+                {
+                    kitDisplayName = "Builder Pro";
+                    
+                    player.inventory.GiveItem(ItemManager.CreateByName("building.planner", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("hammer", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("wood", 5000));
+                    player.inventory.GiveItem(ItemManager.CreateByName("stone", 5000));
+                    player.inventory.GiveItem(ItemManager.CreateByName("metal.fragments", 2000));
+                    player.inventory.GiveItem(ItemManager.CreateByName("door.hinged.metal", 2));
+                    player.inventory.GiveItem(ItemManager.CreateByName("lock.code", 2));
+                    data.KitCooldowns[kitId] = now + 600;
+                }
+
+                else if (kitId.Equals("vip", StringComparison.OrdinalIgnoreCase) || kitId.Equals("vip elite", StringComparison.OrdinalIgnoreCase))
+                {
+                    kitDisplayName = "VIP Elite";
+                    if (!IsVip(player))
+                    {
+                        SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
+                        return;
+                    }
+                    player.inventory.GiveItem(ItemManager.CreateByName("rifle.ak", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("ammo.rifle", 128));
+                    player.inventory.GiveItem(ItemManager.CreateByName("syringe.medical", 4));
+                    player.inventory.GiveItem(ItemManager.CreateByName("metal.facemask", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("metal.plate.torso", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("hoodie", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("pants", 1));
+                    player.inventory.GiveItem(ItemManager.CreateByName("scrap", 250));
+                    data.KitCooldowns[kitId] = now + 1800;
+                }
+                else
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} Kit nao encontrado.");
+                    return;
+                }
             }
 
-            SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("KitClaimed", player, kitId.ToUpper())}");
+            if (string.IsNullOrEmpty(kitDisplayName))
+            {
+                kitDisplayName = kitId.ToUpper();
+            }
+
+            SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("KitClaimed", player, kitDisplayName)}");
+            Effect.server.Run("assets/bundled/prefabs/fx/notice/loot.drag.drop.fx.prefab", player.transform.position);
         }
 
         public void OpenKitCui(BasePlayer player)
@@ -443,7 +714,7 @@ namespace Oxide.Plugins
             container.Add(new CuiPanel
             {
                 Image = { Color = "0.12 0.13 0.16 0.92" },
-                RectTransform = { AnchorMin = "0.2 0.2", AnchorMax = "0.8 0.8" },
+                RectTransform = { AnchorMin = "0.15 0.15", AnchorMax = "0.85 0.85" },
                 CursorEnabled = true
             }, "Overlay", "RustPlugin_MainCui");
 
@@ -460,26 +731,26 @@ namespace Oxide.Plugins
                 RectTransform = { AnchorMin = "0 0", AnchorMax = "1 1" }
             }, "RustPlugin_Header");
 
-            // Botoes dos kits
+            // Botoes dos kits gerados dinamicamente com comando de console registrado
             container.Add(new CuiButton
             {
-                Button = { Command = "kit starter", Color = "0.2 0.5 0.3 0.9" },
-                RectTransform = { AnchorMin = "0.1 0.6", AnchorMax = "0.4 0.75" },
-                Text = { Text = "RESGATAR STARTER\n<size=11>Kit Basico</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
+                Button = { Command = "rustelite.claimkit starter", Color = "0.2 0.5 0.3 0.9" },
+                RectTransform = { AnchorMin = "0.05 0.58", AnchorMax = "0.33 0.78" },
+                Text = { Text = "RESGATAR STARTER\n<size=10>Kit inicial essencial para sobreviver após o wipe.</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
             }, "RustPlugin_MainCui");
 
             container.Add(new CuiButton
             {
-                Button = { Command = "kit builder", Color = "0.2 0.4 0.6 0.9" },
-                RectTransform = { AnchorMin = "0.6 0.6", AnchorMax = "0.9 0.75" },
-                Text = { Text = "RESGATAR BUILDER\n<size=11>Construcao</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
+                Button = { Command = "rustelite.claimkit builder", Color = "0.2 0.4 0.6 0.9" },
+                RectTransform = { AnchorMin = "0.37 0.58", AnchorMax = "0.65 0.78" },
+                Text = { Text = "RESGATAR BUILDER PRO\n<size=10>Recursos e ferramentas de construção de bases.</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
             }, "RustPlugin_MainCui");
 
             container.Add(new CuiButton
             {
-                Button = { Command = "kit vip", Color = "0.7 0.3 0.1 0.9" },
-                RectTransform = { AnchorMin = "0.35 0.35", AnchorMax = "0.65 0.5" },
-                Text = { Text = "RESGATAR VIP ELITE\n<size=11>Exclusivo VIP</size>", FontSize = 14, Align = TextAnchor.MiddleCenter }
+                Button = { Command = "rustelite.claimkit vip", Color = "0.7 0.3 0.1 0.9" },
+                RectTransform = { AnchorMin = "0.69 0.58", AnchorMax = "0.97 0.78" },
+                Text = { Text = "RESGATAR VIP ELITE\n<size=10>Equipamento tático premium para jogadores com permissão VIP.</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
             }, "RustPlugin_MainCui");
 
             // Botao Fechar

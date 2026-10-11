@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PLUGIN_TEMPLATES } from './data/pluginTemplates';
 import { PluginConfig, SupportedLanguage } from './types/plugin';
 import { Header } from './components/Header';
@@ -12,9 +12,28 @@ import { CheckCircle2, Shield, Flame, Terminal, Download, Cpu } from 'lucide-rea
 import workbenchHero from './assets/images/rust_workbench_gear_1791719285928.jpg';
 
 export default function App() {
-  const [config, setConfig] = useState<PluginConfig>({ ...PLUGIN_TEMPLATES.rustEliteCore });
+  const [config, setConfig] = useState<PluginConfig>(() => {
+    try {
+      const saved = localStorage.getItem('rust_studio_plugin_config');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // fallback
+    }
+    return { ...PLUGIN_TEMPLATES.rustEliteCore };
+  });
+
   const [activeTab, setActiveTab] = useState<'simulator' | 'editor' | 'code' | 'cui'>('simulator');
   const [lang, setLang] = useState<SupportedLanguage>('pt-BR');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('rust_studio_plugin_config', JSON.stringify(config));
+    } catch {
+      // ignore
+    }
+  }, [config]);
 
   const handleDownloadCs = () => {
     soundEffects.playLootClaim();

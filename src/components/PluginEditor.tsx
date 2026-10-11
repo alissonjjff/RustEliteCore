@@ -2,7 +2,8 @@ import React from 'react';
 import { PluginConfig, SupportedLanguage, KitDefinition } from '../types/plugin';
 import { PLUGIN_TEMPLATES } from '../data/pluginTemplates';
 import { soundEffects } from '../utils/audio';
-import { Sliders, Plus, Trash2, Shield, Copy, Check } from 'lucide-react';
+import { generatePluginConfigJson } from '../utils/codeGenerators';
+import { Sliders, Plus, Trash2, Shield, Copy, Check, Download } from 'lucide-react';
 
 interface PluginEditorProps {
   config: PluginConfig;
@@ -65,9 +66,10 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
 
   const handleAddKit = () => {
     soundEffects.playLootClaim();
+    const kitNumber = config.kits.length + 1;
     const newKit: KitDefinition = {
-      id: `custom_${Date.now().toString().slice(-4)}`,
-      name: 'Novo Kit Personalizado',
+      id: `kit_${kitNumber}`,
+      name: `Novo Kit ${kitNumber}`,
       description: 'Descrição do kit configurada pelo usuário.',
       cooldownSeconds: 300,
       icon: 'shield',
@@ -349,18 +351,75 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
 
       {/* Kits Editor Section */}
       <section className="bg-[#12141c] border border-[#232733] rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#ce422b] rounded-sm" />
-            {t.kitsTitle}
-          </h2>
-          <button
-            onClick={handleAddKit}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#ce422b] hover:bg-[#b73722] text-white rounded transition-colors cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t.addKit}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-[#ce422b] rounded-sm" />
+              {t.kitsTitle}
+            </h2>
+            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Salvo no Navegador (localStorage)
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                soundEffects.playLootClaim();
+                const jsonContent = generatePluginConfigJson(config);
+                const blob = new Blob([jsonContent], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${config.name}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-neutral-300 hover:text-white bg-[#1a1c24] hover:bg-[#252834] border border-[#2b3040] rounded transition-colors cursor-pointer"
+              title="Baixar arquivo JSON para colocar em oxide/config/"
+            >
+              <Download className="w-3.5 h-3.5 text-[#ce422b]" />
+              <span>Baixar {config.name}.json</span>
+            </button>
+
+            <button
+              onClick={() => {
+                soundEffects.playClick();
+                setConfig(prev => ({
+                  ...prev,
+                  kits: [...PLUGIN_TEMPLATES.rustEliteCore.kits]
+                }));
+              }}
+              className="px-2.5 py-1 text-xs text-neutral-400 hover:text-white bg-[#1a1c24] hover:bg-[#252834] border border-[#2b3040] rounded transition-colors"
+            >
+              Restaurar Padrão
+            </button>
+
+            <button
+              onClick={handleAddKit}
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-[#ce422b] hover:bg-[#b73722] text-white rounded transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {t.addKit}
+            </button>
+          </div>
+        </div>
+
+        {/* Informative storage notice */}
+        <div className="mb-5 p-3.5 bg-[#171a24] border border-[#262b3a] rounded-lg text-xs text-neutral-300 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-white flex items-center gap-1.5">
+              📁 Onde as alterações e novos kits ficam salvos?
+            </span>
+            <span className="text-neutral-400 text-[11px]">
+              • <strong>No Servidor:</strong> Ficam no arquivo <code className="text-[#ce422b] font-mono">oxide/config/RustEliteCore.json</code> na chave <code className="text-neutral-300 font-mono">"ListaDeKits"</code> (você pode editar direto por lá e rodar <code className="text-[#3498db]">oxide.reload RustEliteCore</code>).
+              <br />
+              • <strong>No Site:</strong> Ficam salvos automaticamente no seu navegador (<code className="text-neutral-300 font-mono">localStorage</code>) para você nunca perder suas alterações ao recarregar a página.
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -372,7 +431,12 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
                   value={kit.name}
                   onChange={e => {
                     const next = [...config.kits];
-                    next[idx].name = e.target.value;
+                    const val = e.target.value;
+                    next[idx].name = val;
+                    const slug = val.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '');
+                    if (slug && (next[idx].id.startsWith('custom_') || next[idx].id.startsWith('kit_'))) {
+                      next[idx].id = slug;
+                    }
                     setConfig({ ...config, kits: next });
                   }}
                   className="bg-transparent text-sm font-bold text-white focus:outline-none border-b border-transparent focus:border-[#ce422b]"
@@ -386,30 +450,162 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
                 </button>
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-neutral-400 block mb-1">Cooldown (Segundos)</label>
+                  <input
+                    type="number"
+                    value={kit.cooldownSeconds}
+                    onChange={e => {
+                      const next = [...config.kits];
+                      next[idx].cooldownSeconds = parseInt(e.target.value) || 0;
+                      setConfig({ ...config, kits: next });
+                    }}
+                    className="w-full bg-[#12141c] border border-[#2b3040] rounded px-2.5 py-1 text-xs text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-neutral-400 block mb-1">Acesso VIP</label>
+                  <button
+                    onClick={() => {
+                      const next = [...config.kits];
+                      next[idx].permissionRequired = next[idx].permissionRequired ? undefined : 'rustelitecore.vip';
+                      setConfig({ ...config, kits: next });
+                    }}
+                    className={`w-full py-1 px-2 rounded text-xs font-bold border transition-colors ${
+                      kit.permissionRequired
+                        ? 'bg-[#f39c12]/20 border-[#f39c12] text-[#f39c12]'
+                        : 'bg-[#12141c] border-[#2b3040] text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    {kit.permissionRequired ? '★ Exclusivo VIP' : 'Livre (Padrão)'}
+                  </button>
+                </div>
+              </div>
+
               <div>
-                <label className="text-[11px] text-neutral-400 block mb-1">Cooldown (Segundos)</label>
+                <label className="text-[11px] text-neutral-400 block mb-1">Descrição</label>
                 <input
-                  type="number"
-                  value={kit.cooldownSeconds}
+                  type="text"
+                  value={kit.description}
                   onChange={e => {
                     const next = [...config.kits];
-                    next[idx].cooldownSeconds = parseInt(e.target.value) || 0;
+                    next[idx].description = e.target.value;
                     setConfig({ ...config, kits: next });
                   }}
-                  className="w-full bg-[#12141c] border border-[#2b3040] rounded px-2.5 py-1 text-xs text-white font-mono"
+                  className="w-full bg-[#12141c] border border-[#2b3040] rounded px-2.5 py-1 text-xs text-neutral-300"
                 />
               </div>
 
-              {/* Items in kit */}
+              {/* Items in kit - Fully Editable */}
               <div>
-                <span className="text-[11px] font-semibold text-neutral-400 block mb-1.5">Itens do Kit</span>
-                <div className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-neutral-400">
+                    Itens ({kit.items.length})
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
                   {kit.items.map((item, itemIdx) => (
-                    <div key={itemIdx} className="flex items-center justify-between text-xs bg-[#12141c] px-2 py-1 rounded">
-                      <span className="text-neutral-300 truncate">{item.name}</span>
-                      <span className="text-[#ce422b] font-mono font-bold">x{item.amount}</span>
+                    <div
+                      key={itemIdx}
+                      className="flex items-center justify-between gap-2 text-xs bg-[#12141c] px-2.5 py-1.5 rounded border border-white/5"
+                    >
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-neutral-200 truncate font-medium">{item.name}</span>
+                        <span className="text-[10px] text-neutral-500 font-mono truncate">{item.shortname}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[11px] text-neutral-400 font-mono">x</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100000"
+                          value={item.amount}
+                          onChange={e => {
+                            const next = [...config.kits];
+                            next[idx].items[itemIdx].amount = Math.max(1, parseInt(e.target.value) || 1);
+                            setConfig({ ...config, kits: next });
+                          }}
+                          className="w-16 bg-[#181a24] border border-[#2b3040] rounded px-1.5 py-0.5 text-xs text-[#ce422b] font-mono font-bold text-right"
+                        />
+                        <button
+                          onClick={() => {
+                            const next = [...config.kits];
+                            next[idx].items.splice(itemIdx, 1);
+                            setConfig({ ...config, kits: next });
+                          }}
+                          className="p-1 text-neutral-500 hover:text-red-400 transition-colors"
+                          title="Remover este item"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Quick Add Item inside kit */}
+                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center gap-1.5">
+                  <select
+                    id={`select-item-${kit.id}`}
+                    className="flex-1 bg-[#12141c] border border-[#2b3040] rounded px-2 py-1 text-xs text-neutral-300 focus:outline-none"
+                    defaultValue="rifle.ak"
+                  >
+                    <option value="rifle.ak">AK-47 (1x)</option>
+                    <option value="ammo.rifle">Munição 5.56 (128x)</option>
+                    <option value="syringe.medical">Seringa Médica (4x)</option>
+                    <option value="explosive.timed">C4 Explosivo (2x)</option>
+                    <option value="wood">Madeira (1000x)</option>
+                    <option value="stone">Pedra (1000x)</option>
+                    <option value="metal.fragments">Fragmentos de Metal (1000x)</option>
+                    <option value="sulfur">Enxofre (500x)</option>
+                    <option value="scrap">Scrap (250x)</option>
+                    <option value="bandage">Bandagem (5x)</option>
+                    <option value="metal.facemask">Máscara de Metal (1x)</option>
+                    <option value="metal.plate.torso">Colete de Metal (1x)</option>
+                    <option value="door.hinged.metal">Porta de Metal (2x)</option>
+                    <option value="lock.code">Code Lock (2x)</option>
+                  </select>
+
+                  <button
+                    onClick={() => {
+                      const sel = document.getElementById(`select-item-${kit.id}`) as HTMLSelectElement;
+                      if (!sel) return;
+                      const val = sel.value;
+                      const defaults: Record<string, { name: string; amount: number }> = {
+                        'rifle.ak': { name: 'Assault Rifle (AK-47)', amount: 1 },
+                        'ammo.rifle': { name: 'Munição 5.56', amount: 128 },
+                        'syringe.medical': { name: 'Seringa Médica', amount: 4 },
+                        'explosive.timed': { name: 'C4 (Timed Explosive)', amount: 2 },
+                        'wood': { name: 'Madeira', amount: 1000 },
+                        'stone': { name: 'Pedra', amount: 1000 },
+                        'metal.fragments': { name: 'Fragmentos de Metal', amount: 1000 },
+                        'sulfur': { name: 'Enxofre', amount: 500 },
+                        'scrap': { name: 'Scrap (Sucata)', amount: 250 },
+                        'bandage': { name: 'Bandagem', amount: 5 },
+                        'metal.facemask': { name: 'Máscara Facial de Metal', amount: 1 },
+                        'metal.plate.torso': { name: 'Colete de Metal', amount: 1 },
+                        'door.hinged.metal': { name: 'Porta de Metal', amount: 2 },
+                        'lock.code': { name: 'Code Lock', amount: 2 },
+                      };
+                      const found = defaults[val] || { name: val, amount: 1 };
+                      soundEffects.playLootClaim();
+                      const next = [...config.kits];
+                      next[idx].items.push({
+                        shortname: val,
+                        name: found.name,
+                        amount: found.amount,
+                        container: 'main'
+                      });
+                      setConfig({ ...config, kits: next });
+                    }}
+                    className="px-2.5 py-1 bg-[#222736] hover:bg-[#ce422b] hover:text-white text-neutral-300 text-xs font-bold rounded transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Adicionar</span>
+                  </button>
                 </div>
               </div>
             </div>

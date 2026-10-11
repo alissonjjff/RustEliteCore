@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
             Rust Plugin <span className="text-[#ce422b]">Studio</span>
           </span>
           <span className="text-[11px] font-mono px-2 py-0.5 bg-[#ce422b]/20 text-[#ce422b] border border-[#ce422b]/30 rounded font-bold">
-            v2.0.0
+            v2.2.3
           </span>
         </div>
 
