@@ -16,12 +16,18 @@ export default function App() {
     try {
       const saved = localStorage.getItem('rust_studio_plugin_config');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          name: 'RustEliteCore',
+          version: '2.2.3',
+          author: 'brtaskgamer',
+        };
       }
     } catch {
       // fallback
     }
-    return { ...PLUGIN_TEMPLATES.rustEliteCore };
+    return { ...PLUGIN_TEMPLATES.rustEliteCore, name: 'RustEliteCore', version: '2.2.3', author: 'brtaskgamer' };
   });
 
   const [activeTab, setActiveTab] = useState<'simulator' | 'editor' | 'code' | 'cui'>('simulator');
@@ -50,7 +56,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0d10] text-slate-100 flex flex-col selection:bg-[#ce422b] selection:text-white">
+    <div className="min-h-screen bg-[#080d09] text-[#e1eee4] flex flex-col selection:bg-[#22c55e] selection:text-black">
       {/* Top Bar Header */}
       <Header
         activeTab={activeTab}
@@ -61,69 +67,71 @@ export default function App() {
         pluginName={config.name}
       />
 
-      {/* Hero Overview Banner */}
-      <section className="relative w-full border-b border-[#232733] bg-[#111319] overflow-hidden">
+      {/* Hero Overview Banner (Military Code Tech HUD) */}
+      <section className="relative w-full border-b border-[#1c3020] bg-[#0c140e] military-grid-bg overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           <div className="flex-1 flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-xs font-mono text-[#ce422b]">
-              <Flame className="w-4 h-4 text-[#ce422b]" />
-              <span className="font-bold tracking-wider uppercase">
-                {lang === 'pt-BR' ? 'Oxide / uMod & Carbon Plugin Engine' : 'Oxide / uMod & Carbon Plugin Engine'}
+            <div className="flex items-center gap-2 text-xs font-mono text-[#4ade80]">
+              <span className="px-1.5 py-0.5 bg-[#132617] border border-[#23472a] text-[#22c55e] font-bold text-[10px] tracking-widest uppercase">
+                [SYS.CORE]
               </span>
-              <span className="text-neutral-500">·</span>
-              <span className="text-neutral-400">Rust Dedicated Protocol 2420</span>
+              <span className="font-bold tracking-wider uppercase">
+                {lang === 'pt-BR' ? 'Oxide / uMod & Carbon Tactical Engine' : 'Oxide / uMod & Carbon Tactical Engine'}
+              </span>
+              <span className="text-[#36563c]">·</span>
+              <span className="text-[#84a089]">Rust Dedicated Protocol 2420</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+              <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight uppercase font-mono">
                 {config.title}
               </h1>
-              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-mono font-bold tracking-wide flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                v{config.version} (Build Atualizada)
+              <span className="px-2.5 py-1 bg-[#102314] text-[#4ade80] border border-[#244c2c] text-xs font-mono font-bold tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-[#22c55e]" />
+                [v{config.version} // STABLE]
               </span>
             </div>
 
-            <p className="text-xs lg:text-sm text-neutral-400 max-w-2xl leading-relaxed">
+            <p className="text-xs lg:text-sm text-[#8fa795] max-w-2xl leading-relaxed">
               {config.description}
             </p>
 
-            {/* Quick Badges Unboxed */}
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-neutral-400 mt-2">
-              <span className="flex items-center gap-1.5 text-neutral-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+            {/* Quick Badges Unboxed - Military Tech Telemetry */}
+            <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#8fa795] mt-2">
+              <span className="flex items-center gap-1.5 text-[#b2c9b7]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#22c55e]" />
                 C# Nativo Facepunch
               </span>
-              <span className="text-neutral-600">·</span>
-              <span className="flex items-center gap-1.5 text-neutral-300">
-                <Shield className="w-3.5 h-3.5 text-[#ce422b]" />
+              <span className="text-[#2b4430]">·</span>
+              <span className="flex items-center gap-1.5 text-[#b2c9b7]">
+                <Shield className="w-3.5 h-3.5 text-[#4ade80]" />
                 Permissões Oxide
               </span>
-              <span className="text-neutral-600">·</span>
-              <span className="flex items-center gap-1.5 text-neutral-300">
-                <Cpu className="w-3.5 h-3.5 text-[#3498db]" />
+              <span className="text-[#2b4430]">·</span>
+              <span className="flex items-center gap-1.5 text-[#b2c9b7]">
+                <Cpu className="w-3.5 h-3.5 text-[#86efac]" />
                 Taxa de Coleta {config.gatherMultiplier}x (VIP {config.vipGatherMultiplier}x)
               </span>
             </div>
           </div>
 
-          {/* Side Workbench Thumbnail & Fast Action */}
-          <div className="shrink-0 flex items-center gap-4 bg-[#171922] p-3 rounded-xl border border-[#272b38] shadow-lg">
+          {/* Side Workbench Thumbnail & Fast Action - Straight Tactical HUD Box */}
+          <div className="shrink-0 flex items-center gap-4 bg-[#0f1a12] p-3 border border-[#203624] shadow-md shadow-black/40">
             <img
               src={workbenchHero}
               alt="Rust Workbench"
-              className="w-16 h-16 rounded-lg object-cover border border-white/10 shrink-0"
+              className="w-16 h-16 object-cover border border-[#2a4830] shrink-0"
             />
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-white font-mono">{config.name}.cs</span>
-              <span className="text-[11px] text-neutral-400">
-                Pronto para <code className="text-[#ce422b]">/oxide/plugins/</code>
+              <span className="text-xs font-bold text-[#e1eee4] font-mono tracking-wide">{config.name}.cs</span>
+              <span className="text-[11px] text-[#7e9984] font-mono">
+                Pasta <code className="text-[#4ade80] bg-[#142317] px-1 border border-[#203925]">/oxide/plugins/</code>
               </span>
               <button
                 onClick={handleDownloadCs}
-                className="flex items-center gap-1.5 px-3 py-1 bg-[#ce422b] hover:bg-[#b73722] text-white text-xs font-bold rounded transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#22c55e] hover:bg-[#16a34a] text-[#061408] text-xs font-mono font-bold uppercase tracking-wider border border-[#4ade80] transition-colors cursor-pointer"
               >
-                <Download className="w-3 h-3" />
+                <Download className="w-3.5 h-3.5" />
                 Baixar Plugin C#
               </button>
             </div>
@@ -140,23 +148,31 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-[#0a0b0e] border-t border-[#1c1f28] px-4 lg:px-8 py-6 text-neutral-500 text-xs">
+      <footer className="w-full bg-[#060a07] border-t border-[#17271b] px-4 lg:px-8 py-6 text-[#728978] text-xs font-mono">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-[#ce422b] text-white flex items-center justify-center font-bold text-[10px]">
-              R
+            <div className="w-6 h-6 border border-[#2b4b30] bg-[#0c140e] overflow-hidden flex items-center justify-center shrink-0">
+              <img
+                src="https://i.imgur.com/AKe0qE2.png"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo.png';
+                }}
+                alt="RUST ELITE CORE"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span>Rust Plugin Studio & Generator — Compatível com Oxide, uMod e Carbon</span>
+            <span className="text-[#96ada0]">RUST ELITE CORE — Compatível com Oxide, uMod e Carbon</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <span>Arquivo: {config.name}.cs</span>
-            <span>·</span>
-            <span>Facepunch Rust Dedicated Server</span>
-            <span>·</span>
+          <div className="flex items-center gap-4 text-xs">
+            <span>ARQUIVO: {config.name}.cs</span>
+            <span className="text-[#2b4430]">·</span>
+            <span>Facepunch Dedicated Server</span>
+            <span className="text-[#2b4430]">·</span>
             <button
               onClick={() => setActiveTab('simulator')}
-              className="text-[#ce422b] hover:underline flex items-center gap-1"
+              className="text-[#4ade80] hover:text-[#86efac] flex items-center gap-1 cursor-pointer"
             >
               <Terminal className="w-3 h-3" /> Testar no Simulador
             </button>

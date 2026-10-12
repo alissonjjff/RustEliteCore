@@ -57,16 +57,16 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col gap-6">
+    <div className="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col gap-6 font-mono military-grid-bg">
       {/* Top Selector & Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#12141c] p-4 rounded-xl border border-[#232733]">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#0c140e] p-4 border border-[#1c3021] shadow-lg shadow-black/40">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => { soundEffects.playClick(); setActiveSubTab('cs'); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               activeSubTab === 'cs'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#181a24]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <FileCode className="w-3.5 h-3.5" />
@@ -75,10 +75,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
 
           <button
             onClick={() => { soundEffects.playClick(); setActiveSubTab('config'); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               activeSubTab === 'config'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#181a24]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -87,22 +87,22 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
 
           <button
             onClick={() => { soundEffects.playClick(); setActiveSubTab('lang'); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               activeSubTab === 'lang'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#181a24]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            oxide/lang/ (Localização)
+            oxide/lang/ (PT/EN)
           </button>
 
           <button
             onClick={() => { soundEffects.playClick(); setActiveSubTab('guide'); }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               activeSubTab === 'guide'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#181a24]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <Server className="w-3.5 h-3.5" />
@@ -114,16 +114,16 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e212c] hover:bg-[#282d3c] border border-[#2d3242] text-xs font-semibold text-neutral-200 rounded transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0f1a12] hover:bg-[#16271a] border border-[#1e3422] text-xs font-mono font-semibold text-[#b2c9b6] hover:text-white transition-colors cursor-pointer uppercase tracking-wider"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-green-400" />
-                  <span className="text-green-400">{lang === 'pt-BR' ? 'Copiado!' : 'Copied!'}</span>
+                  <Check className="w-3.5 h-3.5 text-[#22c55e]" />
+                  <span className="text-[#4ade80]">{lang === 'pt-BR' ? 'Copiado!' : 'Copied!'}</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5" />
+                  <Copy className="w-3.5 h-3.5 text-[#8fa794]" />
                   <span>{lang === 'pt-BR' ? 'Copiar Código' : 'Copy Code'}</span>
                 </>
               )}
@@ -131,7 +131,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
 
             <button
               onClick={() => handleDownload(getActiveContent(), getFileName(), 'text/plain')}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#ce422b] hover:bg-[#b73722] text-xs font-bold text-white rounded transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#22c55e] hover:bg-[#16a34a] text-[#061408] border border-[#4ade80] text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-sm shadow-[#22c55e]/25"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{lang === 'pt-BR' ? `Baixar ${getFileName()}` : `Download ${getFileName()}`}</span>
@@ -142,89 +142,89 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
 
       {/* Code Display or Installation Guide */}
       {activeSubTab === 'guide' ? (
-        <div className="bg-[#12141c] border border-[#232733] rounded-xl p-6 lg:p-8 flex flex-col gap-6 text-neutral-300">
+        <div className="bg-[#0c140e] border border-[#1c3021] p-6 lg:p-8 flex flex-col gap-6 text-[#b2c9b6] shadow-lg shadow-black/40">
           <div>
-            <h2 className="text-xl font-black text-white flex items-center gap-2 mb-2">
-              <Server className="w-5 h-5 text-[#ce422b]" />
-              Guia Completo de Instalação no Rust Dedicated Server (Oxide / uMod & Carbon)
+            <h2 className="text-xl font-black text-white flex items-center gap-2 mb-2 font-mono uppercase tracking-wide">
+              <Server className="w-5 h-5 text-[#22c55e]" />
+              Guia Militar / Técnico de Instalação (Oxide / uMod & Carbon)
             </h2>
-            <p className="text-sm text-neutral-400">
-              Siga os passos abaixo para instalar e rodar o plugin <span className="font-mono text-white">{config.name}.cs</span> em qualquer servidor dedicado de Rust (Linux, Windows, Pterodactyl, Zap-Hosting, Hostinger, Nitrado ou local).
+            <p className="text-sm text-[#8fa794] font-sans">
+              Instruções para deploy do plugin <span className="font-mono text-[#4ade80] font-bold">{config.name}.cs</span> em qualquer servidor dedicado de Rust (Linux, Windows, Pterodactyl, Zap-Hosting, Hostinger, Nitrado ou local).
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#181a24] p-5 rounded-lg border border-[#282d3d] flex flex-col gap-3">
-              <div className="w-7 h-7 rounded bg-[#ce422b] text-white flex items-center justify-center font-bold text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-[#0f1a12] p-5 border border-[#1e3422] flex flex-col gap-3">
+              <div className="w-6 h-6 bg-[#22c55e] text-[#061408] flex items-center justify-center font-bold text-xs font-mono">
                 1
               </div>
-              <h3 className="text-base font-bold text-white">Baixar o arquivo .cs</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
+              <h3 className="text-base font-bold text-white font-mono uppercase tracking-wide">Baixar o arquivo .cs</h3>
+              <p className="text-xs text-[#8fa794] leading-relaxed font-sans">
                 Clique no botão de download acima para obter o arquivo <span className="font-mono text-white">{config.name}.cs</span>.
               </p>
             </div>
 
-            <div className="bg-[#181a24] p-5 rounded-lg border border-[#282d3d] flex flex-col gap-3">
-              <div className="w-7 h-7 rounded bg-[#ce422b] text-white flex items-center justify-center font-bold text-sm">
+            <div className="bg-[#0f1a12] p-5 border border-[#1e3422] flex flex-col gap-3">
+              <div className="w-6 h-6 bg-[#22c55e] text-[#061408] flex items-center justify-center font-bold text-xs font-mono">
                 2
               </div>
-              <h3 className="text-base font-bold text-white">Colocar na pasta de Plugins</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                Acesse o FTP ou Gerenciador de Arquivos do servidor e envie o arquivo para o diretório:
+              <h3 className="text-base font-bold text-white font-mono uppercase tracking-wide">Deploy no Servidor</h3>
+              <p className="text-xs text-[#8fa794] leading-relaxed font-sans">
+                Acesse o SFTP ou painel e envie o arquivo para o diretório de plugins:
               </p>
-              <code className="text-xs font-mono bg-[#0e1015] p-2 rounded text-[#ce422b]">
+              <code className="text-xs font-mono bg-[#070c08] p-2 border border-[#1c3021] text-[#4ade80]">
                 /server/rust/oxide/plugins/
               </code>
             </div>
 
-            <div className="bg-[#181a24] p-5 rounded-lg border border-[#282d3d] flex flex-col gap-3">
-              <div className="w-7 h-7 rounded bg-[#ce422b] text-white flex items-center justify-center font-bold text-sm">
+            <div className="bg-[#0f1a12] p-5 border border-[#1e3422] flex flex-col gap-3">
+              <div className="w-6 h-6 bg-[#22c55e] text-[#061408] flex items-center justify-center font-bold text-xs font-mono">
                 3
               </div>
-              <h3 className="text-base font-bold text-white">Compilação Automática</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                O Oxide compila o plugin em tempo real! Você verá no console:
+              <h3 className="text-base font-bold text-white font-mono uppercase tracking-wide">Compilação Automática</h3>
+              <p className="text-xs text-[#8fa794] leading-relaxed font-sans">
+                O compilador do Oxide carrega o plugin em tempo real com zero downtime:
               </p>
-              <code className="text-[11px] font-mono bg-[#0e1015] p-2 rounded text-green-400">
+              <code className="text-[11px] font-mono bg-[#070c08] p-2 border border-[#1c3021] text-[#86efac]">
                 [Oxide] {config.name} was compiled successfully
               </code>
             </div>
           </div>
 
           {/* Useful Server Commands */}
-          <div className="bg-[#181a24] p-6 rounded-lg border border-[#282d3d]">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">
-              Comandos de Gerenciamento via Console do Servidor (F1 / RCON)
+          <div className="bg-[#0f1a12] p-6 border border-[#1e3422]">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4 font-mono text-[#4ade80]">
+              [RCON.COMMANDS] Comandos do Servidor (F1 Console / Web RCON)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-              <div className="bg-[#0e1015] p-3 rounded border border-white/5">
-                <span className="text-[#ce422b] font-bold">oxide.reload {config.name}</span>
-                <p className="text-neutral-400 font-sans text-[11px] mt-1">Recarrega o plugin imediatamente após alterar a config.</p>
+              <div className="bg-[#070c08] p-3 border border-[#1c3021]">
+                <span className="text-[#4ade80] font-bold">oxide.reload {config.name}</span>
+                <p className="text-[#8fa794] font-sans text-[11px] mt-1">Recarrega o plugin imediatamente após alterar a config.</p>
               </div>
-              <div className="bg-[#0e1015] p-3 rounded border border-white/5">
-                <span className="text-[#ce422b] font-bold">oxide.grant group default rustelite.use</span>
-                <p className="text-neutral-400 font-sans text-[11px] mt-1">Libera os comandos de kits e homes para todos os jogadores.</p>
+              <div className="bg-[#070c08] p-3 border border-[#1c3021]">
+                <span className="text-[#4ade80] font-bold">oxide.grant group default rustelite.use</span>
+                <p className="text-[#8fa794] font-sans text-[11px] mt-1">Libera comandos de kits e homes para jogadores comuns.</p>
               </div>
-              <div className="bg-[#0e1015] p-3 rounded border border-white/5">
-                <span className="text-[#ce422b] font-bold">oxide.grant user &lt;SteamID64&gt; rustelite.vip</span>
-                <p className="text-neutral-400 font-sans text-[11px] mt-1">Concede benefícios VIP (mais homes, taxas maiores, kit VIP).</p>
+              <div className="bg-[#070c08] p-3 border border-[#1c3021]">
+                <span className="text-[#4ade80] font-bold">oxide.grant user &lt;SteamID64&gt; rustelitecore.vip</span>
+                <p className="text-[#8fa794] font-sans text-[11px] mt-1">Concede status VIP (taxas maiores, kits VIP, mais homes).</p>
               </div>
-              <div className="bg-[#0e1015] p-3 rounded border border-white/5">
-                <span className="text-[#ce422b] font-bold">oxide.show perms {config.name}</span>
-                <p className="text-neutral-400 font-sans text-[11px] mt-1">Lista todas as permissões registradas pelo plugin.</p>
+              <div className="bg-[#070c08] p-3 border border-[#1c3021]">
+                <span className="text-[#4ade80] font-bold">oxide.show perms {config.name}</span>
+                <p className="text-[#8fa794] font-sans text-[11px] mt-1">Lista todas as permissões registradas pelo plugin.</p>
               </div>
             </div>
           </div>
         </div>
       ) : (
         /* Code Display Box */
-        <div className="relative bg-[#0c0d12] border border-[#232733] rounded-xl overflow-hidden shadow-2xl">
-          <div className="bg-[#151722] px-4 py-2 border-b border-[#232733] flex items-center justify-between text-neutral-400 text-xs font-mono">
-            <span>{getFileName()}</span>
-            <span>{getActiveContent().split('\n').length} linhas</span>
+        <div className="relative bg-[#060a07] border-2 border-[#1c3021] overflow-hidden shadow-2xl">
+          <div className="bg-[#0c140e] px-4 py-2 border-b border-[#1c3021] flex items-center justify-between text-[#8fa794] text-xs font-mono">
+            <span className="text-white font-bold">[FILE: {getFileName()}]</span>
+            <span className="text-[#4ade80]">{getActiveContent().split('\n').length} LINHAS // C# OXIDE</span>
           </div>
 
-          <pre className="p-4 lg:p-6 text-xs lg:text-sm font-mono text-neutral-200 overflow-x-auto max-h-[640px] leading-relaxed">
+          <pre className="p-4 lg:p-6 text-xs lg:text-sm font-mono text-[#d7e6dc] overflow-x-auto max-h-[640px] leading-relaxed selection:bg-[#22c55e] selection:text-black">
             <code>{getActiveContent()}</code>
           </pre>
         </div>

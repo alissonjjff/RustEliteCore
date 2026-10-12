@@ -12,8 +12,8 @@ interface CuiDesignerProps {
 
 export const CuiDesigner: React.FC<CuiDesignerProps> = ({ config, setConfig, lang }) => {
   const [headerTitle, setHeaderTitle] = useState('MENU DE KITS VIP');
-  const [accentColor, setAccentColor] = useState('#ce422b');
-  const [panelBg, setPanelBg] = useState('rgba(24, 26, 32, 0.95)');
+  const [accentColor, setAccentColor] = useState('#22c55e');
+  const [panelBg, setPanelBg] = useState('rgba(12, 20, 14, 0.95)');
   const [fontSize, setFontSize] = useState(18);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -47,7 +47,7 @@ public void CreateCustomUi(BasePlayer player)
     // Botao de Acao
     container.Add(new CuiButton
     {
-        Button = { Command = "kit claim starter", Color = "0.2 0.5 0.3 0.9" },
+        Button = { Command = "kit claim starter", Color = "0.15 0.55 0.25 0.9" },
         RectTransform = { AnchorMin = "0.3 0.4", AnchorMax = "0.7 0.55" },
         Text = { Text = "RESGATAR RECOMPENSA", FontSize = 14, Align = TextAnchor.MiddleCenter }
     }, "CustomUi_Root");
@@ -63,59 +63,59 @@ public void CreateCustomUi(BasePlayer player)
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col gap-6">
+    <div className="w-full max-w-7xl mx-auto p-4 lg:p-8 flex flex-col gap-6 font-mono military-grid-bg">
       {/* Intro */}
-      <div className="bg-[#12141c] border border-[#232733] rounded-xl p-6">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-          <Layout className="w-5 h-5 text-[#ce422b]" />
-          {lang === 'pt-BR' ? 'Designer Visual de Telas CUI (Rust In-Game HUD)' : 'Visual Rust CUI Screen Designer'}
+      <div className="bg-[#0c140e] border border-[#1c3021] p-6 shadow-lg shadow-black/40">
+        <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-2 font-mono uppercase tracking-wide">
+          <Layout className="w-4 h-4 text-[#22c55e]" />
+          [CUI.DESIGNER] {lang === 'pt-BR' ? 'Designer Visual de Telas CUI (Rust In-Game HUD)' : 'Visual Rust CUI Screen Designer'}
         </h2>
-        <p className="text-xs text-neutral-400">
-          Personalize as cores, títulos e estilo dos menus gráficos exibidos na tela dos jogadores via <span className="font-mono text-white">Oxide.Game.Rust.Cui</span>.
+        <p className="text-xs text-[#8fa794] font-sans">
+          Personalize as cores, títulos e estilo dos menus gráficos exibidos na tela dos jogadores via <span className="font-mono text-[#4ade80]">Oxide.Game.Rust.Cui</span>.
         </p>
       </div>
 
       {/* Editor & Preview Split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Controls */}
-        <div className="bg-[#12141c] border border-[#232733] rounded-xl p-6 flex flex-col gap-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Palette className="w-4 h-4 text-[#ce422b]" />
-            Configurar Estilos
+        <div className="bg-[#0c140e] border border-[#1c3021] p-6 flex flex-col gap-4 shadow-lg shadow-black/40">
+          <h3 className="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wide border-b border-[#18291c] pb-2">
+            <Palette className="w-4 h-4 text-[#22c55e]" />
+            Configurar Estilos HUD
           </h3>
 
           <div>
-            <label className="text-xs font-semibold text-neutral-400 block mb-1.5">Título do Cabeçalho</label>
+            <label className="text-xs font-semibold text-[#8fa794] block mb-1.5 uppercase tracking-wider">Título do Cabeçalho</label>
             <input
               type="text"
               value={headerTitle}
               onChange={e => setHeaderTitle(e.target.value)}
-              className="w-full bg-[#181a24] border border-[#2b3040] rounded px-3 py-2 text-xs text-white focus:border-[#ce422b] focus:outline-none"
+              className="w-full bg-[#080d09] border border-[#213725] px-3 py-2 text-xs text-white focus:border-[#22c55e] focus:outline-none font-mono"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-neutral-400 block mb-1.5">Tamanho da Fonte ({fontSize}px)</label>
+            <label className="text-xs font-semibold text-[#8fa794] block mb-1.5 uppercase tracking-wider">Tamanho da Fonte ({fontSize}px)</label>
             <input
               type="range"
               min="12"
               max="28"
               value={fontSize}
               onChange={e => setFontSize(parseInt(e.target.value))}
-              className="w-full accent-[#ce422b]"
+              className="w-full accent-[#22c55e] cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-neutral-400 block mb-2">Tema de Cores</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="text-xs font-semibold text-[#8fa794] block mb-2 uppercase tracking-wider">Padrão Tático de Cores</label>
+            <div className="grid grid-cols-2 gap-2">
               {[
-                { name: 'Rust Orange', color: '#ce422b', oxide: '0.81 0.26 0.17 0.95' },
-                { name: 'Toxic Green', color: '#27ae60', oxide: '0.15 0.68 0.38 0.95' },
-                { name: 'Cobalt Blue', color: '#2980b9', oxide: '0.16 0.50 0.73 0.95' },
-                { name: 'Dark Metal', color: '#2c3e50', oxide: '0.17 0.24 0.31 0.95' },
-                { name: 'Gold VIP', color: '#f39c12', oxide: '0.95 0.61 0.07 0.95' },
-                { name: 'Blood Crimson', color: '#c0392b', oxide: '0.75 0.22 0.17 0.95' }
+                { name: 'Tactical Green', color: '#22c55e', oxide: '0.13 0.77 0.36 0.95' },
+                { name: 'Military Olive', color: '#65a30d', oxide: '0.39 0.64 0.05 0.95' },
+                { name: 'Radar Green', color: '#10b981', oxide: '0.06 0.72 0.51 0.95' },
+                { name: 'Night Vision', color: '#84cc16', oxide: '0.51 0.80 0.08 0.95' },
+                { name: 'Tactical Amber', color: '#eab308', oxide: '0.91 0.70 0.03 0.95' },
+                { name: 'Desert Khaki', color: '#ca8a04', oxide: '0.79 0.54 0.01 0.95' }
               ].map(theme => (
                 <button
                   key={theme.name}
@@ -124,13 +124,13 @@ public void CreateCustomUi(BasePlayer player)
                     setAccentColor(theme.color);
                     setConfig(prev => ({ ...prev, cuiPrimaryColor: theme.oxide }));
                   }}
-                  className={`p-2 rounded text-left border text-[11px] font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`p-2 text-left border text-[11px] font-mono font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
                     accentColor === theme.color
-                      ? 'border-white bg-[#222736] text-white'
-                      : 'border-[#272b3a] bg-[#171922] text-neutral-400 hover:text-white'
+                      ? 'border-[#22c55e] bg-[#142817] text-white'
+                      : 'border-[#1e3422] bg-[#080d09] text-[#8fa794] hover:text-white'
                   }`}
                 >
-                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: theme.color }} />
+                  <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: theme.color }} />
                   <span className="truncate">{theme.name}</span>
                 </button>
               ))}
@@ -139,62 +139,62 @@ public void CreateCustomUi(BasePlayer player)
 
           <button
             onClick={handleCopySnippet}
-            className="mt-4 flex items-center justify-center gap-2 py-2 px-4 bg-[#1e222e] hover:bg-[#282d3d] border border-[#2b3040] text-xs font-bold text-white rounded transition-colors cursor-pointer"
+            className="mt-4 flex items-center justify-center gap-2 py-2 px-4 bg-[#122416] hover:bg-[#1a3320] border border-[#223e27] text-xs font-mono font-bold uppercase tracking-wider text-white transition-colors cursor-pointer"
           >
-            {copiedCode ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            {copiedCode ? <Check className="w-4 h-4 text-[#22c55e]" /> : <Copy className="w-4 h-4 text-[#8fa794]" />}
             {copiedCode ? 'Código CUI Copiado!' : 'Copiar C# CuiHelper'}
           </button>
         </div>
 
         {/* Live Mockup Viewport */}
-        <div className="lg:col-span-2 bg-[#0c0d10] border border-[#232733] rounded-xl overflow-hidden relative aspect-[16/10] flex items-center justify-center p-6 shadow-2xl">
+        <div className="lg:col-span-2 bg-[#050a06] border-2 border-[#1c3021] overflow-hidden relative aspect-[16/10] flex items-center justify-center p-6 shadow-2xl">
           <img
             src={domeBackdrop}
             alt="Rust Backdrop"
-            className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-40 select-none"
+            className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-35 select-none"
           />
 
           {/* Rendered CUI Container */}
           <div
-            className="relative z-10 w-full max-w-lg rounded-lg border-2 shadow-2xl overflow-hidden flex flex-col"
+            className="relative z-10 w-full max-w-lg border-2 shadow-2xl overflow-hidden flex flex-col font-mono"
             style={{ backgroundColor: panelBg, borderColor: accentColor }}
           >
             {/* Header */}
             <div
               className="px-4 py-3 flex items-center justify-between text-white font-bold"
-              style={{ backgroundColor: accentColor }}
+              style={{ backgroundColor: accentColor, color: '#051408' }}
             >
-              <span style={{ fontSize: `${fontSize}px` }} className="uppercase tracking-wider">
+              <span style={{ fontSize: `${fontSize}px` }} className="uppercase tracking-wider font-mono font-bold">
                 {headerTitle}
               </span>
-              <span className="text-xs bg-black/30 px-2 py-0.5 rounded cursor-pointer">X</span>
+              <span className="text-xs bg-black/40 text-white px-2 py-0.5 cursor-pointer font-mono font-bold">X</span>
             </div>
 
             {/* Content Mockup */}
-            <div className="p-6 flex flex-col gap-4">
-              <p className="text-xs text-neutral-300">
-                Pré-visualização fiel de como a tela CUI é renderizada no cliente do jogador conectando ao seu servidor Rust.
+            <div className="p-6 flex flex-col gap-4 bg-[#09110a]/90">
+              <p className="text-xs text-[#8fa794] font-sans">
+                Pré-visualização de HUD renderizado na interface in-game do jogador pelo Oxide CUI.
               </p>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#101217] p-3 rounded border border-white/10 text-center">
-                  <div className="text-xs font-bold text-white">KIT INICIANTE</div>
-                  <div className="text-[10px] text-neutral-400 mt-1">Ferramentas de Pedra</div>
+                <div className="bg-[#050a06] p-3 border border-[#1e3422] text-center">
+                  <div className="text-xs font-bold text-white uppercase">[KIT INICIANTE]</div>
+                  <div className="text-[10px] text-[#8fa794] mt-1 font-sans">Ferramentas de Pedra</div>
                   <button
                     onClick={() => soundEffects.playLootClaim()}
-                    className="mt-3 w-full py-1 text-[11px] font-bold text-white rounded transition-colors"
+                    className="mt-3 w-full py-1 text-[11px] font-mono font-bold text-[#061408] transition-colors uppercase tracking-wider cursor-pointer"
                     style={{ backgroundColor: accentColor }}
                   >
                     Resgatar
                   </button>
                 </div>
 
-                <div className="bg-[#101217] p-3 rounded border border-white/10 text-center">
-                  <div className="text-xs font-bold text-white">KIT VIP ELITE</div>
-                  <div className="text-[10px] text-neutral-400 mt-1">Arma AK-47 + Munição</div>
+                <div className="bg-[#050a06] p-3 border border-[#1e3422] text-center">
+                  <div className="text-xs font-bold text-white uppercase">[KIT VIP ELITE]</div>
+                  <div className="text-[10px] text-[#8fa794] mt-1 font-sans">Arma AK-47 + Munição</div>
                   <button
                     onClick={() => soundEffects.playLootClaim()}
-                    className="mt-3 w-full py-1 text-[11px] font-bold text-white rounded transition-colors"
+                    className="mt-3 w-full py-1 text-[11px] font-mono font-bold text-[#061408] transition-colors uppercase tracking-wider cursor-pointer"
                     style={{ backgroundColor: accentColor }}
                   >
                     Resgatar

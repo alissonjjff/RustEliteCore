@@ -438,8 +438,172 @@ namespace Oxide.Plugins
                 return;
             }
 
-            string kitName = args[0].ToLowerInvariant();
-            ClaimKit(player, kitName);
+            string subCmd = args[0].ToLowerInvariant();
+
+            // Comandos administrativos para criacao e edicao in-game de kits
+            if (subCmd == "add" || subCmd == "create" || subCmd == "criar")
+            {
+                if (!HasPermission(player, PermADMIN) && !player.IsAdmin)
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
+                    return;
+                }
+
+                if (args.Length < 2)
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} <color=#f39c12>Uso:</color> /kit add <nome> [cooldown_segundos] [vip]");
+                    SendReply(player, $"{_config.General.ChatPrefix} <color=#7f8c8d>Dica: Organize seu inventario com os itens desejados antes de executar.</color>");
+                    return;
+                }
+
+                string kitName = args[1];
+                int cooldown = 300;
+                bool isVip = false;
+
+                if (args.Length >= 3 && int.TryParse(args[2], out int cd)) cooldown = cd;
+                if (args.Length >= 4 && (args[3].ToLowerInvariant() == "vip" || args[3].ToLowerInvariant() == "true")) isVip = true;
+
+                CreateKitFromPlayerInventory(player, kitName, cooldown, isVip);
+                return;
+            }
+
+            if (subCmd == "remove" || subCmd == "delete" || subCmd == "del")
+            {
+                if (!HasPermission(player, PermADMIN) && !player.IsAdmin)
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
+                    return;
+                }
+
+                if (args.Length < 2)
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} <color=#f39c12>Uso:</color> /kit remove <nome>");
+                    return;
+                }
+
+                RemoveKit(player, args[1]);
+                return;
+            }
+
+            if (subCmd == "list" || subCmd == "listar")
+            {
+                if (!HasPermission(player, PermADMIN) && !player.IsAdmin)
+                {
+                    SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
+                    return;
+                }
+
+                ListKitsAdmin(player);
+                return;
+            }
+
+            ClaimKit(player, subCmd);
+        }
+
+        private void CreateKitFromPlayerInventory(BasePlayer player, string kitName, int cooldown, bool isVip)
+        {
+            if (_config.Kits == null) _config.Kits = new List<KitConfig>();
+
+            string id = kitName.ToLowerInvariant().Replace(" ", "_");
+            KitConfig existing = _config.Kits.FirstOrDefault(k => (k.Id != null && k.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) || (k.Name != null && k.Name.Equals(kitName, StringComparison.OrdinalIgnoreCase)));
+
+            List<KitItemConfig> items = new List<KitItemConfig>();
+
+            if (player.inventory?.containerBelt?.itemList != null)
+            {
+                foreach (Item item in player.inventory.containerBelt.itemList)
+                {
+                    if (item?.info == null) continue;
+                    items.Add(new KitItemConfig { Shortname = item.info.shortname, Name = item.info.displayName.translated ?? item.info.shortname, Amount = item.amount });
+                }
+            }
+
+            if (player.inventory?.containerMain?.itemList != null)
+            {
+                foreach (Item item in player.inventory.containerMain.itemList)
+                {
+                    if (item?.info == null) continue;
+                    items.Add(new KitItemConfig { Shortname = item.info.shortname, Name = item.info.displayName.translated ?? item.info.shortname, Amount = item.amount });
+                }
+            }
+
+            if (player.inventory?.containerWear?.itemList != null)
+            {
+                foreach (Item item in player.inventory.containerWear.itemList)
+                {
+                    if (item?.info == null) continue;
+                    items.Add(new KitItemConfig { Shortname = item.info.shortname, Name = item.info.displayName.translated ?? item.info.shortname, Amount = item.amount });
+                }
+            }
+
+            if (items.Count == 0)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#e74c3c>Erro:</color> Seu inventario esta vazio! Coloque no seu inventario os itens que farao parte do kit.");
+                return;
+            }
+
+            if (existing != null)
+            {
+                existing.Name = kitName;
+                existing.CooldownSeconds = cooldown;
+                existing.PermissionRequired = isVip ? PermVIP : string.Empty;
+                existing.Items = items;
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#2ecc71>Sucesso:</color> Kit <color=#f39c12>{kitName}</color> atualizado com {items.Count} itens do seu inventario!");
+            }
+            else
+            {
+                KitConfig newKit = new KitConfig
+                {
+                    Id = id,
+                    Name = kitName,
+                    Description = isVip ? "Kit exclusivo para membros VIP." : "Kit criado in-game pelo administrador.",
+                    CooldownSeconds = cooldown,
+                    PermissionRequired = isVip ? PermVIP : string.Empty,
+                    Items = items
+                };
+                _config.Kits.Add(newKit);
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#2ecc71>Sucesso:</color> Novo kit <color=#f39c12>{kitName}</color> criado com {items.Count} itens do seu inventario!");
+            }
+
+            SaveConfig();
+            Effect.server.Run("assets/bundled/prefabs/fx/notice/loot.drag.drop.fx.prefab", player.transform.position);
+            Puts($"[Kits] Administrador {player.displayName} ({player.UserIDString}) salvou o kit '{kitName}' com {items.Count} itens.");
+        }
+
+        private void RemoveKit(BasePlayer player, string kitName)
+        {
+            if (_config.Kits == null) return;
+            string id = kitName.ToLowerInvariant().Replace(" ", "_");
+            int removed = _config.Kits.RemoveAll(k => (k.Id != null && k.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) || (k.Name != null && k.Name.Equals(kitName, StringComparison.OrdinalIgnoreCase)));
+
+            if (removed > 0)
+            {
+                SaveConfig();
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#2ecc71>Sucesso:</color> O kit <color=#f39c12>{kitName}</color> foi removido com sucesso!");
+                Puts($"[Kits] Administrador {player.displayName} removeu o kit '{kitName}'.");
+            }
+            else
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#e74c3c>Erro:</color> Kit '{kitName}' nao encontrado.");
+            }
+        }
+
+        private void ListKitsAdmin(BasePlayer player)
+        {
+            if (_config.Kits == null || _config.Kits.Count == 0)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} Nenhum kit cadastrado no momento.");
+                return;
+            }
+
+            SendReply(player, $"{_config.General.ChatPrefix} <color=#3498db>=== KITS REGISTRADOS NO SERVIDOR ===</color>");
+            foreach (KitConfig k in _config.Kits)
+            {
+                string vipTag = !string.IsNullOrEmpty(k.PermissionRequired) ? "<color=#f1c40f>[VIP]</color>" : "<color=#2ecc71>[Livre]</color>";
+                int itemCount = k.Items != null ? k.Items.Count : 0;
+                SendReply(player, $"{vipTag} <color=#f39c12>{k.Name}</color> (ID: {k.Id}) - Recarga: {k.CooldownSeconds}s - Itens: {itemCount}");
+            }
+            SendReply(player, $"{_config.General.ChatPrefix} <color=#7f8c8d>Comandos: /kit add <nome> [cd] [vip] | /kit remove <nome></color>");
         }` : ''}
 
         ${hasAutoDoors ? `[ChatCommand("ad")]
@@ -663,28 +827,45 @@ namespace Oxide.Plugins
                 RectTransform = { AnchorMin = "0 0", AnchorMax = "1 1" }
             }, "RustPlugin_Header");
 
-            // Botoes dos kits gerados dinamicamente com comando de console registrado
-            ${config.kits.map((kit, index) => {
-              const col = index % 3;
-              const row = Math.floor(index / 3);
-              const minX = (0.05 + col * 0.32).toFixed(2);
-              const maxX = (0.05 + col * 0.32 + 0.28).toFixed(2);
-              const minY = (0.58 - row * 0.24).toFixed(2);
-              const maxY = (0.78 - row * 0.24).toFixed(2);
-              const color = kit.permissionRequired ? '0.7 0.3 0.1 0.9' : (index % 2 === 0 ? '0.2 0.5 0.3 0.9' : '0.2 0.4 0.6 0.9');
-              return `container.Add(new CuiButton
+            // Botoes dos kits renderizados em tempo de execucao a partir de _config.Kits
+            List<KitConfig> activeKits = (_config.Kits != null && _config.Kits.Count > 0) ? _config.Kits : GetDefaultKits();
+
+            for (int i = 0; i < activeKits.Count && i < 6; i++)
             {
-                Button = { Command = "rustelite.claimkit ${kit.id}", Color = "${color}" },
-                RectTransform = { AnchorMin = "${minX} ${minY}", AnchorMax = "${maxX} ${maxY}" },
-                Text = { Text = "RESGATAR ${kit.name.toUpperCase()}\\n<size=10>${kit.description.replace(/"/g, '\\"')}</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
-            }, "RustPlugin_MainCui");`;
-            }).join('\n\n            ')}
+                KitConfig kit = activeKits[i];
+                int col = i % 3;
+                int row = i / 3;
+                float minX = 0.05f + col * 0.32f;
+                float maxX = minX + 0.28f;
+                float minY = 0.58f - row * 0.24f;
+                float maxY = minY + 0.20f;
+                string color = !string.IsNullOrEmpty(kit.PermissionRequired) ? "0.7 0.3 0.1 0.9" : (i % 2 == 0 ? "0.2 0.5 0.3 0.9" : "0.2 0.4 0.6 0.9");
+                string desc = !string.IsNullOrEmpty(kit.Description) ? kit.Description : "Kit disponivel";
+
+                container.Add(new CuiButton
+                {
+                    Button = { Command = "rustelite.claimkit " + kit.Id, Color = color },
+                    RectTransform = { AnchorMin = $"{minX.ToString(System.Globalization.CultureInfo.InvariantCulture)} {minY.ToString(System.Globalization.CultureInfo.InvariantCulture)}", AnchorMax = $"{maxX.ToString(System.Globalization.CultureInfo.InvariantCulture)} {maxY.ToString(System.Globalization.CultureInfo.InvariantCulture)}" },
+                    Text = { Text = $"RESGATAR {kit.Name.ToUpper()}\\n<size=10>{desc}</size>", FontSize = 13, Align = TextAnchor.MiddleCenter }
+                }, "RustPlugin_MainCui");
+            }
+
+            // Dica de administracao in-game para administradores
+            bool isAdmin = HasPermission(player, PermADMIN) || player.IsAdmin;
+            if (isAdmin)
+            {
+                container.Add(new CuiLabel
+                {
+                    Text = { Text = "<color=#f1c40f>[ADMIN]:</color> Crie/atualize kits montando seu inventario e usando <color=#3498db>/kit add <nome> [cooldown] [vip]</color>", FontSize = 11, Align = TextAnchor.MiddleCenter },
+                    RectTransform = { AnchorMin = "0.05 0.15", AnchorMax = "0.95 0.21" }
+                }, "RustPlugin_MainCui");
+            }
 
             // Botao Fechar
             container.Add(new CuiButton
             {
                 Button = { Close = "RustPlugin_MainCui", Color = "0.8 0.2 0.2 0.9" },
-                RectTransform = { AnchorMin = "0.4 0.08", AnchorMax = "0.6 0.18" },
+                RectTransform = { AnchorMin = "0.4 0.04", AnchorMax = "0.6 0.13" },
                 Text = { Text = "FECHAR", FontSize = 13, Align = TextAnchor.MiddleCenter }
             }, "RustPlugin_MainCui");
 

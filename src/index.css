@@ -2,34 +2,59 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --font-display: 'Teko', sans-serif;
+    --font-display: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  /* Strict straight lines - zero curves anywhere */
+  *, ::before, ::after {
+    border-radius: 0 !important;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #0c0d10;
-    color: #e2e8f0;
+    background-color: #080d09;
+    color: #e2ece4;
     overflow-x: hidden;
   }
 }
 
-/* Rust custom scrollbars */
+/* Military / Code Tech tactical grid backdrop */
+.military-grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(34, 197, 94, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.military-scanline {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0, 0, 0, 0.25) 50%,
+    rgba(0, 0, 0, 0.25)
+  );
+  background-size: 100% 4px;
+}
+
+/* Tactical military scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #12141a;
+  background: #0b120c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2e39;
-  border-radius: 3px;
+  background: #1e3322;
+  border: 1px solid #2d4d33;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ce422b;
+  background: #22c55e;
 }
+

@@ -288,16 +288,16 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
   };
 
   return (
-    <div className="w-full bg-[#0c0d10] p-4 lg:p-6 flex flex-col gap-4">
-      {/* Viewport Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#14161d] p-3 rounded-lg border border-[#232732]">
+    <div className="w-full bg-[#080d09] p-4 lg:p-6 flex flex-col gap-4">
+      {/* Viewport Control Bar - Military HUD Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c140e] p-3 border border-[#1c3021] shadow-md shadow-black/40">
         <div className="flex items-center gap-2">
           <button
             onClick={() => { soundEffects.playClick(); setViewMode('hud'); }}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               viewMode === 'hud'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#1b1e27]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <Crosshair className="w-3.5 h-3.5" />
@@ -306,10 +306,10 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
 
           <button
             onClick={() => { soundEffects.playClick(); setViewMode('console'); }}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
               viewMode === 'console'
-                ? 'bg-[#ce422b] text-white'
-                : 'text-neutral-400 hover:text-white bg-[#1b1e27]'
+                ? 'bg-[#22c55e] text-[#061408] border border-[#4ade80]'
+                : 'text-[#8fa794] hover:text-white bg-[#0f1a12] border border-[#1e3422]'
             }`}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -318,28 +318,28 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
         </div>
 
         {/* Quick Simulator Toggles */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-mono">
           <button
             onClick={() => {
               soundEffects.playClick();
               setIsVipGranted(!isVipGranted);
               addSystemChat(!isVipGranted ? `<color=#2ecc71>[Permissão]</color> Cargo VIP ativado no simulador!` : `<color=#e74c3c>[Permissão]</color> Cargo VIP desativado.`);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer uppercase tracking-wider ${
               isVipGranted
-                ? 'bg-[#f39c12]/20 border-[#f39c12] text-[#f39c12]'
-                : 'bg-[#1b1e27] border-[#2b2f3d] text-neutral-400 hover:text-white'
+                ? 'bg-[#183a1f] border-[#22c55e] text-[#4ade80]'
+                : 'bg-[#0f1a12] border-[#1e3422] text-[#8fa794] hover:text-white'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
-            <span>VIP: {isVipGranted ? (lang === 'pt-BR' ? 'Ativo (5x)' : 'Granted (5x)') : (lang === 'pt-BR' ? 'Não Concedido' : 'No VIP')}</span>
+            <span>VIP: {isVipGranted ? (lang === 'pt-BR' ? 'Ativo (5x)' : 'Active (5x)') : (lang === 'pt-BR' ? 'Inativo' : 'No VIP')}</span>
           </button>
 
           <button
             onClick={() => handleExecuteCommand('/gather_sim')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded bg-[#1b1e27] hover:bg-[#252a36] border border-[#2b2f3d] text-neutral-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#0f1a12] hover:bg-[#16271a] border border-[#1e3422] text-[#b2c9b6] transition-colors cursor-pointer uppercase tracking-wider"
           >
-            <Play className="w-3.5 h-3.5 text-[#ce422b]" />
+            <Play className="w-3.5 h-3.5 text-[#22c55e]" />
             <span>{lang === 'pt-BR' ? 'Simular Mineração' : 'Simulate Gather'}</span>
           </button>
 
@@ -347,19 +347,19 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             onClick={() => {
               soundEffects.playLootClaim();
               addConsoleLog(`[Oxide] Reloading plugin ${config.name}...`, 'oxide');
-              addSystemChat(`<color=#3498db>[Oxide]</color> Plugin ${config.name} recarregado instantaneamente!`);
+              addSystemChat(`<color=#2ecc71>[Oxide]</color> Plugin ${config.name} recarregado instantaneamente!`);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded bg-[#1b1e27] hover:bg-[#252a36] border border-[#2b2f3d] text-neutral-300"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-[#0f1a12] hover:bg-[#16271a] border border-[#1e3422] text-[#b2c9b6] cursor-pointer"
             title="Recarregar Plugin / Reload Plugin"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-3.5 h-3.5 text-[#22c55e]" />
           </button>
         </div>
       </div>
 
       {/* Main View Area */}
       {viewMode === 'hud' ? (
-        <div className="relative w-full aspect-[16/9] min-h-[520px] rounded-xl overflow-hidden border border-[#252936] select-none shadow-2xl bg-black">
+        <div className="relative w-full aspect-[16/9] min-h-[520px] overflow-hidden border-2 border-[#1c3021] select-none shadow-2xl bg-black">
           {/* Authentic Rust Dome Monument Backdrop */}
           <img
             src={domeBackdrop}
@@ -368,42 +368,42 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             className="absolute inset-0 w-full h-full object-cover"
           />
 
-          {/* Atmospheric Tint Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/50 pointer-events-none" />
+          {/* Atmospheric Tactical Green Scrim Vignette */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-[#071109]/30 to-black/60 pointer-events-none" />
 
-          {/* Top Compass */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-6 px-6 py-1 bg-black/60 backdrop-blur-sm border border-white/10 rounded font-mono text-xs text-neutral-300 font-bold tracking-widest shadow-md">
-            <span className="text-neutral-500">240</span>
-            <span className="text-[#ce422b]">W</span>
-            <span className="text-neutral-400">285</span>
+          {/* Top Compass - Military HUD Style */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-6 px-6 py-1 bg-black/80 border border-[#223b28] font-mono text-xs text-[#b2c9b6] font-bold tracking-widest shadow-md">
+            <span className="text-[#597560]">240</span>
+            <span className="text-[#4ade80]">W</span>
+            <span className="text-[#809a86]">285</span>
             <span className="text-white">NW</span>
-            <span className="text-[#ce422b]">N</span>
-            <span className="text-neutral-400">035</span>
+            <span className="text-[#22c55e]">N</span>
+            <span className="text-[#809a86]">035</span>
             <span className="text-white">NE</span>
           </div>
 
           {/* Active Teleport Notification */}
           {teleportTimer !== null && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#1e2029]/95 border-2 border-[#ce422b] px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 animate-pulse">
-              <Sparkles className="w-5 h-5 text-[#ce422b]" />
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#0c160f]/95 border-2 border-[#22c55e] px-6 py-3 shadow-2xl flex items-center gap-3 animate-pulse font-mono">
+              <Sparkles className="w-5 h-5 text-[#22c55e]" />
               <div className="text-center">
-                <div className="text-xs uppercase tracking-wider text-neutral-400 font-bold">Teleporte em Andamento</div>
+                <div className="text-xs uppercase tracking-wider text-[#8fa794] font-bold">[TELEPORTE EM ANDAMENTO]</div>
                 <div className="text-lg font-black text-white">
-                  {teleportTimer}s <span className="text-xs font-normal text-neutral-300">para o destino</span>
+                  {teleportTimer}s <span className="text-xs font-normal text-[#8fa794]">para o destino</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* In-Game Chat Box (Bottom-Left) */}
-          <div className="absolute bottom-20 left-4 w-96 max-w-[calc(100%-2rem)] flex flex-col gap-2 z-10">
+          <div className="absolute bottom-20 left-4 w-96 max-w-[calc(100%-2rem)] flex flex-col gap-2 z-10 font-mono">
             {/* Quick Chips */}
             <div className="flex flex-wrap items-center gap-1.5">
               {['/kit', '/sethome base', '/home base', '/ad', '/rates'].map(cmd => (
                 <button
                   key={cmd}
                   onClick={() => handleExecuteCommand(cmd)}
-                  className="px-2 py-0.5 text-[11px] font-mono bg-black/75 hover:bg-[#ce422b] text-neutral-300 hover:text-white rounded border border-white/15 backdrop-blur transition-colors cursor-pointer"
+                  className="px-2 py-0.5 text-[11px] font-mono bg-black/85 hover:bg-[#22c55e] hover:text-[#061408] text-[#b2c9b6] border border-[#223b28] transition-colors cursor-pointer"
                 >
                   {cmd}
                 </button>
@@ -411,11 +411,11 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             </div>
 
             {/* Chat Stream Messages */}
-            <div className="h-44 overflow-y-auto flex flex-col gap-1.5 p-2.5 bg-black/70 backdrop-blur-md rounded border border-white/10 text-xs font-mono text-white shadow-lg">
+            <div className="h-44 overflow-y-auto flex flex-col gap-1.5 p-2.5 bg-black/80 border border-[#223b28] text-xs font-mono text-[#e1eee4] shadow-lg">
               {chatMessages.map(msg => (
                 <div key={msg.id} className="leading-snug break-words">
                   {!msg.isSystem && (
-                    <span className="text-neutral-400 mr-1.5">[{msg.timestamp}] <span className="text-[#3498db]">GamerBR:</span></span>
+                    <span className="text-[#8fa794] mr-1.5">[{msg.timestamp}] <span className="text-[#4ade80]">GamerBR:</span></span>
                   )}
                   {renderFormattedText(msg.text)}
                 </div>
@@ -424,7 +424,7 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             </div>
 
             {/* Chat Input */}
-            <div className="flex items-center gap-1.5 bg-black/85 backdrop-blur border border-white/20 rounded p-1">
+            <div className="flex items-center gap-1.5 bg-black/90 border border-[#223b28] p-1">
               <input
                 type="text"
                 placeholder={lang === 'pt-BR' ? "Digite /kit, /home ou comando..." : "Type /kit, /home or command..."}
@@ -436,22 +436,22 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
                     setChatInput('');
                   }
                 }}
-                className="flex-1 bg-transparent px-2.5 py-1 text-xs text-white placeholder-neutral-500 font-mono focus:outline-none"
+                className="flex-1 bg-transparent px-2.5 py-1 text-xs text-white placeholder-[#58735f] font-mono focus:outline-none"
               />
               <button
                 onClick={() => {
                   handleExecuteCommand(chatInput);
                   setChatInput('');
                 }}
-                className="p-1.5 text-neutral-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+                className="p-1.5 text-[#b2c9b6] hover:text-white hover:bg-[#16271a] transition-colors cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-3.5 h-3.5 text-[#22c55e]" />
               </button>
             </div>
           </div>
 
-          {/* Rust Hotbar (Bottom Center) */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1 bg-black/80 backdrop-blur-md border border-white/15 rounded-md shadow-2xl">
+          {/* Rust Hotbar (Bottom Center) - Military HUD Grid */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1 bg-black/85 border border-[#223b28] shadow-2xl">
             {[
               { name: 'AK-47', code: 'rifle.ak', qty: 1, ammo: '30/30' },
               { name: 'Seringa Médica', code: 'syringe.medical', qty: 4, ammo: '' },
@@ -463,19 +463,19 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
               <div
                 key={idx}
                 onClick={() => { soundEffects.playClick(); setActiveSlot(idx); }}
-                className={`relative w-14 h-14 rounded flex flex-col justify-between p-1 cursor-pointer transition-all ${
+                className={`relative w-14 h-14 flex flex-col justify-between p-1 cursor-pointer transition-colors ${
                   activeSlot === idx
-                    ? 'border-2 border-[#ce422b] bg-white/15'
-                    : 'border border-white/10 bg-black/50 hover:bg-white/10'
+                    ? 'border-2 border-[#22c55e] bg-[#142817]/70'
+                    : 'border border-[#203624] bg-black/60 hover:bg-[#101b13]'
                 }`}
               >
-                <span className="text-[10px] font-mono font-bold text-neutral-400 leading-none">{idx + 1}</span>
-                <span className="text-[10px] font-sans font-medium text-neutral-200 leading-tight truncate text-center">
+                <span className="text-[10px] font-mono font-bold text-[#8fa794] leading-none">{idx + 1}</span>
+                <span className="text-[10px] font-mono font-medium text-[#d7e6dc] leading-tight truncate text-center">
                   {item.name}
                 </span>
-                <div className="flex justify-between items-center text-[9px] font-mono text-neutral-300">
+                <div className="flex justify-between items-center text-[9px] font-mono text-[#8fa794]">
                   <span>{item.ammo}</span>
-                  <span className="font-bold text-white">x{item.qty}</span>
+                  <span className="font-bold text-[#4ade80]">x{item.qty}</span>
                 </div>
               </div>
             ))}
@@ -484,50 +484,50 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           {/* Player Vitals HUD (Bottom Right) */}
           <div className="absolute bottom-3 right-4 flex flex-col gap-1.5 w-44 font-mono text-xs">
             {/* Health Bar */}
-            <div className="flex items-center justify-between px-2 py-1 bg-black/75 backdrop-blur border border-white/15 rounded">
-              <span className="font-bold text-neutral-300">HP</span>
-              <span className="font-bold text-[#2ecc71] tabular-nums">100</span>
-              <div className="w-16 h-2 bg-neutral-800 rounded-sm overflow-hidden">
-                <div className="w-full h-full bg-[#2ecc71]" />
+            <div className="flex items-center justify-between px-2 py-1 bg-black/85 border border-[#223b28]">
+              <span className="font-bold text-[#8fa794]">HP</span>
+              <span className="font-bold text-[#22c55e] tabular-nums">100</span>
+              <div className="w-16 h-2 bg-[#0c160f] border border-[#1b3120] overflow-hidden">
+                <div className="w-full h-full bg-[#22c55e]" />
               </div>
             </div>
 
             {/* Hydration Bar */}
-            <div className="flex items-center justify-between px-2 py-1 bg-black/75 backdrop-blur border border-white/15 rounded">
-              <span className="font-bold text-neutral-300">H2O</span>
-              <span className="font-bold text-[#3498db] tabular-nums">250</span>
-              <div className="w-16 h-2 bg-neutral-800 rounded-sm overflow-hidden">
-                <div className="w-full h-full bg-[#3498db]" />
+            <div className="flex items-center justify-between px-2 py-1 bg-black/85 border border-[#223b28]">
+              <span className="font-bold text-[#8fa794]">H2O</span>
+              <span className="font-bold text-[#4ade80] tabular-nums">250</span>
+              <div className="w-16 h-2 bg-[#0c160f] border border-[#1b3120] overflow-hidden">
+                <div className="w-full h-full bg-[#4ade80]" />
               </div>
             </div>
 
             {/* Hunger Bar */}
-            <div className="flex items-center justify-between px-2 py-1 bg-black/75 backdrop-blur border border-white/15 rounded">
-              <span className="font-bold text-neutral-300">FOOD</span>
-              <span className="font-bold text-[#e67e22] tabular-nums">500</span>
-              <div className="w-16 h-2 bg-neutral-800 rounded-sm overflow-hidden">
-                <div className="w-full h-full bg-[#e67e22]" />
+            <div className="flex items-center justify-between px-2 py-1 bg-black/85 border border-[#223b28]">
+              <span className="font-bold text-[#8fa794]">FOOD</span>
+              <span className="font-bold text-[#86efac] tabular-nums">500</span>
+              <div className="w-16 h-2 bg-[#0c160f] border border-[#1b3120] overflow-hidden">
+                <div className="w-full h-full bg-[#86efac]" />
               </div>
             </div>
           </div>
 
           {/* Real In-Game CUI Interface Overlay (Opens with /kit) */}
           {showCuiMenu && (
-            <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200">
-              <div className="relative w-full max-w-xl bg-[#181a20]/95 border-2 border-[#ce422b] rounded-lg shadow-2xl overflow-hidden flex flex-col">
+            <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-150">
+              <div className="relative w-full max-w-xl bg-[#0c150e] border-2 border-[#22c55e] shadow-2xl overflow-hidden flex flex-col font-mono">
                 {/* CUI Header */}
-                <div className="bg-[#ce422b] px-4 py-3 flex items-center justify-between text-white">
+                <div className="bg-[#122416] border-b border-[#22c55e] px-4 py-3 flex items-center justify-between text-white">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    <span className="font-black text-sm uppercase tracking-wider">
-                      MENU DE KITS - {config.name.toUpperCase()}
+                    <Shield className="w-4 h-4 text-[#22c55e]" />
+                    <span className="font-bold text-xs uppercase tracking-wider text-[#4ade80]">
+                      [CUI.MENU] - {config.name.toUpperCase()}
                     </span>
                   </div>
                   <button
                     onClick={() => { soundEffects.playClick(); setShowCuiMenu(false); }}
-                    className="p-1 hover:bg-black/20 rounded transition-colors"
+                    className="p-1 hover:bg-[#1a3320] transition-colors cursor-pointer"
                   >
-                    <X className="w-4 h-4 text-white" />
+                    <X className="w-4 h-4 text-[#b2c9b6]" />
                   </button>
                 </div>
 
@@ -540,27 +540,27 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
                     return (
                       <div
                         key={kit.id}
-                        className="bg-[#121318] border border-[#2c303d] rounded p-3 flex flex-col justify-between gap-3"
+                        className="bg-[#080d09] border border-[#1e3422] p-3 flex flex-col justify-between gap-3 font-mono"
                       >
                         <div>
-                          <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center justify-between gap-1 mb-1 border-b border-[#18291c] pb-1">
                             <span className="font-bold text-xs text-white">{kit.name}</span>
                             {kit.permissionRequired && (
-                              <span className="text-[10px] bg-[#f39c12]/20 text-[#f39c12] px-1.5 py-0.5 rounded font-mono font-bold">
+                              <span className="text-[10px] bg-[#142918] text-[#4ade80] border border-[#234e2c] px-1 font-bold">
                                 VIP
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-neutral-400 line-clamp-2 leading-relaxed">
+                          <p className="text-[11px] text-[#8fa794] line-clamp-2 leading-relaxed font-sans">
                             {kit.description}
                           </p>
 
                           {/* Kit Items Quick Preview */}
-                          <div className="mt-2.5 pt-2 border-t border-white/5 flex flex-col gap-1 text-[10px] font-mono text-neutral-300">
+                          <div className="mt-2 pt-2 border-t border-[#18291c] flex flex-col gap-1 text-[10px] text-[#b2c9b6]">
                             {kit.items.slice(0, 3).map((it, i) => (
                               <div key={i} className="flex justify-between">
                                 <span className="truncate">{it.name}</span>
-                                <span className="text-[#ce422b] font-bold">x{it.amount}</span>
+                                <span className="text-[#4ade80] font-bold">x{it.amount}</span>
                               </div>
                             ))}
                           </div>
@@ -569,12 +569,12 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
                         <button
                           disabled={isCooldown || Boolean(requiresVip)}
                           onClick={() => handleClaimKit(kit.id)}
-                          className={`w-full py-2 px-3 text-xs font-bold rounded uppercase transition-colors cursor-pointer ${
+                          className={`w-full py-2 px-3 text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
                             requiresVip
-                              ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                              ? 'bg-[#0f1710] text-[#556d5b] cursor-not-allowed border border-[#1b2b1d]'
                               : isCooldown
-                              ? 'bg-[#e74c3c]/20 text-[#e74c3c] border border-[#e74c3c]/40 cursor-not-allowed'
-                              : 'bg-[#ce422b] hover:bg-[#b5341f] text-white shadow-md'
+                              ? 'bg-[#1a1c11] text-[#eab308] border border-[#eab308]/40 cursor-not-allowed'
+                              : 'bg-[#22c55e] hover:bg-[#16a34a] text-[#061408] border border-[#4ade80]'
                           }`}
                         >
                           {requiresVip
@@ -589,11 +589,11 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
                 </div>
 
                 {/* CUI Footer */}
-                <div className="bg-[#111216] px-4 py-2.5 border-t border-[#232732] flex items-center justify-between text-[11px] text-neutral-400">
-                  <span>Interface renderizada via Oxide CUI (CuiHelper.AddUi)</span>
+                <div className="bg-[#080d09] px-4 py-2.5 border-t border-[#18291c] flex items-center justify-between text-[11px] text-[#8fa794]">
+                  <span>Renderizado via Oxide CUI (CuiHelper.AddUi)</span>
                   <button
                     onClick={() => { soundEffects.playClick(); setShowCuiMenu(false); }}
-                    className="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 text-white rounded font-medium text-xs transition-colors"
+                    className="px-3 py-1 bg-[#122316] hover:bg-[#18311f] border border-[#223e27] text-white font-medium text-xs transition-colors cursor-pointer uppercase tracking-wider"
                   >
                     Fechar
                   </button>
@@ -603,34 +603,34 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           )}
         </div>
       ) : (
-        /* Server Oxide RCON Console View */
-        <div className="w-full aspect-[16/9] min-h-[520px] bg-[#0b0c0f] border border-[#232732] rounded-xl flex flex-col overflow-hidden font-mono text-xs shadow-2xl">
+        /* Server Oxide RCON Console View - High Tech Military Green Phosphor CRT */
+        <div className="w-full aspect-[16/9] min-h-[520px] bg-[#050a06] border-2 border-[#1c3021] flex flex-col overflow-hidden font-mono text-xs shadow-2xl military-scanline">
           {/* Console Header */}
-          <div className="bg-[#14161f] px-4 py-2.5 border-b border-[#232732] flex items-center justify-between text-neutral-300">
+          <div className="bg-[#0b140d] px-4 py-2.5 border-b border-[#1c3021] flex items-center justify-between text-[#8fa794]">
             <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-[#ce422b]" />
-              <span className="font-bold">Oxide RCON Terminal — Rust Dedicated Server 127.0.0.1:28015</span>
+              <Terminal className="w-4 h-4 text-[#22c55e]" />
+              <span className="font-bold text-white tracking-wide">[RCON.TERMINAL] Oxide Dedicated Server 127.0.0.1:28015</span>
             </div>
-            <span className="text-[11px] text-neutral-500">Protocol 2420 · Oxide 2.0.4025</span>
+            <span className="text-[11px] text-[#55705d]">Protocol 2420 · Oxide 2.0.4025</span>
           </div>
 
           {/* Console Output Log */}
-          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-1.5 text-neutral-300">
+          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-1.5 text-[#b2c9b6]">
             {consoleLogs.map(log => (
               <div key={log.id} className="leading-relaxed">
-                <span className="text-neutral-600 mr-2">[{log.time}]</span>
-                {log.type === 'oxide' && <span className="text-[#ce422b] font-bold mr-1">[Oxide]</span>}
-                {log.type === 'warn' && <span className="text-[#f39c12] font-bold mr-1">[Warning]</span>}
-                {log.type === 'chat' && <span className="text-[#3498db] font-bold mr-1">[Chat]</span>}
-                <span className={log.type === 'warn' ? 'text-[#f39c12]' : 'text-neutral-200'}>{log.text}</span>
+                <span className="text-[#496350] mr-2">[{log.time}]</span>
+                {log.type === 'oxide' && <span className="text-[#22c55e] font-bold mr-1">[Oxide]</span>}
+                {log.type === 'warn' && <span className="text-[#eab308] font-bold mr-1">[Warning]</span>}
+                {log.type === 'chat' && <span className="text-[#4ade80] font-bold mr-1">[Chat]</span>}
+                <span className={log.type === 'warn' ? 'text-[#eab308]' : 'text-[#d7e6dc]'}>{log.text}</span>
               </div>
             ))}
             <div ref={consoleEndRef} />
           </div>
 
           {/* Console Input Bar */}
-          <div className="bg-[#12141c] p-2.5 border-t border-[#232732] flex items-center gap-2">
-            <span className="text-[#ce422b] font-bold">&gt;</span>
+          <div className="bg-[#09110a] p-2.5 border-t border-[#1c3021] flex items-center gap-2">
+            <span className="text-[#22c55e] font-bold text-sm">&gt;</span>
             <input
               type="text"
               placeholder="Digite comando RCON (ex: oxide.grant user GamerBR rustelite.vip, oxide.reload RustEliteCore)..."
@@ -639,11 +639,11 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
               onKeyDown={e => {
                 if (e.key === 'Enter') handleExecuteConsole();
               }}
-              className="flex-1 bg-transparent text-white placeholder-neutral-600 focus:outline-none"
+              className="flex-1 bg-transparent text-[#e1eee4] placeholder-[#4f6755] focus:outline-none font-mono"
             />
             <button
               onClick={handleExecuteConsole}
-              className="px-4 py-1.5 bg-[#ce422b] hover:bg-[#b73722] text-white font-bold rounded transition-colors text-xs"
+              className="px-4 py-1.5 bg-[#22c55e] hover:bg-[#16a34a] text-[#061408] font-mono font-bold uppercase tracking-wider transition-colors text-xs cursor-pointer border border-[#4ade80]"
             >
               Executar
             </button>
