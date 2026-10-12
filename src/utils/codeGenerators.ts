@@ -155,6 +155,12 @@ namespace Oxide.Plugins
 
             [JsonProperty("BloqueioEmCombateSegundos")]
             public int CombatBlockSeconds { get; set; } = ${config.combatBlockSeconds};
+
+            [JsonProperty("ExigirAutorizacaoArmarioTC")]
+            public bool RequireBuildingPrivilege { get; set; } = ${config.requireBuildingPrivilege !== false ? 'true' : 'false'};
+
+            [JsonProperty("ExigirEstarEmCimaDeFundacao")]
+            public bool RequireFoundation { get; set; } = ${config.requireFoundationOnHome === true ? 'true' : 'false'};
         }` : ''}
 
         ${hasAutoDoors ? `private class AutoDoorSettings
@@ -305,6 +311,8 @@ namespace Oxide.Plugins
                 ["CombatBlocked"] = "<color=#e74c3c>Bloqueado:</color> Voce esta em combate! Aguarde {0}s para se teleportar.",
                 ["KitClaimed"] = "<color=#2ecc71>Kit Resgatado:</color> Voce recebeu o kit <color=#f39c12>{0}</color>!",
                 ["KitCooldown"] = "<color=#e74c3c>Aguarde:</color> Este kit estara disponivel em {0} segundos.",
+                ["NoBuildingPrivilege"] = "<color=#e74c3c>Construcao Bloqueada:</color> Voce nao possui autorizacao no Armario (Building Privilege / TC) para criar uma home nesta base!",
+                ["NotOnFoundation"] = "<color=#e74c3c>Fundacao Necessaria:</color> Voce precisa estar pisando em cima de uma Fundacao (Foundation) para salvar esta home!",
                 ["AutoDoorToggled"] = "<color=#2ecc71>AutoDoor:</color> Portas automaticas {0} com tempo de {1}s.",
                 ["RaidAlert"] = "<color=#e74c3c>[ALERTA DE RAID]</color> Explosao detectada proxima a sua base!"
             }, this, "pt-BR");
@@ -319,6 +327,8 @@ namespace Oxide.Plugins
                 ["CombatBlocked"] = "<color=#e74c3c>Blocked:</color> You are in combat! Teleport available in {0}s.",
                 ["KitClaimed"] = "<color=#2ecc71>Kit Claimed:</color> You received kit <color=#f39c12>{0}</color>!",
                 ["KitCooldown"] = "<color=#e74c3c>Cooldown:</color> Kit will be ready in {0} seconds.",
+                ["NoBuildingPrivilege"] = "<color=#e74c3c>Building Blocked:</color> You do not have Building Privilege (TC authorization) to set a home in this base!",
+                ["NotOnFoundation"] = "<color=#e74c3c>Foundation Required:</color> You must be standing directly on a Foundation to set a home here!",
                 ["AutoDoorToggled"] = "<color=#2ecc71>AutoDoor:</color> Automatic doors {0} with delay of {1}s.",
                 ["RaidAlert"] = "<color=#e74c3c>[RAID ALERT]</color> Explosives detonated near your base!"
             }, this, "en");
@@ -364,6 +374,18 @@ namespace Oxide.Plugins
             if (data.Homes.Count >= maxAllowed && !data.Homes.ContainsKey(homeName))
             {
                 SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("HomeLimitReached", player, maxAllowed)}");
+                return;
+            }
+
+            if (_config.Homes.RequireBuildingPrivilege && !player.CanBuild())
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoBuildingPrivilege", player)}");
+                return;
+            }
+
+            if (_config.Homes.RequireFoundation && !IsPlayerOnFoundation(player))
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NotOnFoundation", player)}");
                 return;
             }
 
@@ -419,7 +441,38 @@ namespace Oxide.Plugins
                 player.Teleport(targetPos);
                 SendReply(player, $"{_config.General.ChatPrefix} Teleportado com sucesso!");
             });
-        }` : ''}
+        }
+
+        [ChatCommand("delhome")]
+        private void CmdDelHome(BasePlayer player, string command, string[] args)
+        {
+            if (!_config.General.EnableHomes)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O sistema de homes esta temporariamente desativado no servidor.");
+                return;
+            }
+
+            if (args.Length == 0)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} Uso correto: /delhome <nome>");
+                return;
+            }
+
+            string homeName = args[0].ToLowerInvariant();
+            PlayerData pData = GetOrCreatePlayerData(player.userID);
+
+            if (!pData.Homes.ContainsKey(homeName))
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("HomeNotFound", player, homeName)}");
+                return;
+            }
+
+            pData.Homes.Remove(homeName);
+            SendReply(player, $"{_config.General.ChatPrefix} Home '<color=#f39c12>{homeName}</color>' removida com sucesso!");
+        }
+
+        [ChatCommand("removehome")]
+        private void CmdRemoveHome(BasePlayer player, string command, string[] args) => CmdDelHome(player, command, args);` : ''}
 
         ${hasKits ? `[ChatCommand("kit")]
         private void CmdKit(BasePlayer player, string command, string[] args)
@@ -764,7 +817,7 @@ namespace Oxide.Plugins
                 {
                     foreach (KitItemConfig item in cfgKit.Items)
                     {
-                        player.inventory.GiveItem(ItemManager.CreateByName(item.Shortname, item.Amount));
+                        GivePlayerItemSafe(player, item.Shortname, item.Amount);
                     }
                 }
 
@@ -781,7 +834,7 @@ namespace Oxide.Plugins
                         SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("NoPermission", player)}");
                         return;
                     }` : ''}
-                    ${kit.items.map(item => `player.inventory.GiveItem(ItemManager.CreateByName("${item.shortname}", ${item.amount}));`).join('\n                    ')}
+                    ${kit.items.map(item => `GivePlayerItemSafe(player, "${item.shortname === 'stone' ? 'stones' : item.shortname === 'stone.hatchet' ? 'stonehatchet' : item.shortname}", ${item.amount});`).join('\n                    ')}
                     data.KitCooldowns[kitId] = now + ${kit.cooldownSeconds};
                 }`).join('\n')}
                 else
@@ -876,6 +929,30 @@ namespace Oxide.Plugins
 
         #region Helpers
 
+        private string NormalizeItemShortname(string shortname)
+        {
+            if (string.IsNullOrEmpty(shortname)) return string.Empty;
+            string s = shortname.Trim().ToLowerInvariant();
+            if (s == "stone") return "stones";
+            if (s == "stone.hatchet") return "stonehatchet";
+            return s;
+        }
+
+        private void GivePlayerItemSafe(BasePlayer player, string shortname, int amount)
+        {
+            if (player == null || amount <= 0) return;
+            string actualShortname = NormalizeItemShortname(shortname);
+            Item item = ItemManager.CreateByName(actualShortname, amount);
+            if (item != null)
+            {
+                player.inventory.GiveItem(item);
+            }
+            else
+            {
+                Puts($"[Aviso] Falha ao criar item com shortname '{shortname}' (normalizado: '{actualShortname}') para o jogador {player.displayName}.");
+            }
+        }
+
         private PlayerData GetOrCreatePlayerData(ulong userId)
         {
             if (!_playerData.TryGetValue(userId, out PlayerData data))
@@ -889,6 +966,21 @@ namespace Oxide.Plugins
         private static double GrabCurrentTime()
         {
             return DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
+
+        private bool IsPlayerOnFoundation(BasePlayer player)
+        {
+            if (player == null) return false;
+            RaycastHit hit;
+            if (UnityEngine.Physics.Raycast(player.transform.position + Vector3.up * 0.5f, Vector3.down, out hit, 2.0f, UnityEngine.LayerMask.GetMask("Construction")))
+            {
+                BuildingBlock block = hit.GetEntity() as BuildingBlock;
+                if (block != null && (block.PrefabName.Contains("foundation") || block.blockDefinition?.hierachyName?.ToLowerInvariant().Contains("foundation") == true))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         #endregion
@@ -918,7 +1010,9 @@ export function generatePluginConfigJson(config: PluginConfig): string {
       MaximoHomesVIP: config.maxHomesVip,
       TempoContagemTeleporteSegundos: config.teleportCountdownSeconds,
       TempoRecargaTeleporteSegundos: config.teleportCooldownSeconds,
-      BloqueioEmCombateSegundos: config.combatBlockSeconds
+      BloqueioEmCombateSegundos: config.combatBlockSeconds,
+      ExigirAutorizacaoArmarioTC: config.requireBuildingPrivilege !== false,
+      ExigirEstarEmCimaDeFundacao: config.requireFoundationOnHome === true
     },
     ConfiguracoesAutoDoor: {
       TempoPadraoFechamentoSegundos: config.autoDoorDefaultSeconds
@@ -933,11 +1027,16 @@ export function generatePluginConfigJson(config: PluginConfig): string {
       Descricao: k.description,
       CooldownSegundos: k.cooldownSeconds,
       PermissaoRequerida: k.permissionRequired || "",
-      Itens: k.items.map(it => ({
-        Shortname: it.shortname,
-        Nome: it.name,
-        Quantidade: it.amount
-      }))
+      Itens: k.items.map(it => {
+        let shortname = it.shortname;
+        if (shortname === 'stone') shortname = 'stones';
+        if (shortname === 'stone.hatchet') shortname = 'stonehatchet';
+        return {
+          Shortname: shortname,
+          Nome: it.name,
+          Quantidade: it.amount
+        };
+      })
     }))
   };
 
@@ -955,6 +1054,8 @@ export function generatePluginLangJson(lang: 'pt-BR' | 'en'): string {
       CombatBlocked: "<color=#e74c3c>Bloqueado:</color> Você está em combate! Aguarde {0}s para se teleportar.",
       KitClaimed: "<color=#2ecc71>Kit Resgatado:</color> Você recebeu o kit <color=#f39c12>{0}</color>!",
       KitCooldown: "<color=#e74c3c>Aguarde:</color> Este kit estará disponível em {0} segundos.",
+      NoBuildingPrivilege: "<color=#e74c3c>Construção Bloqueada:</color> Você não possui autorização no Armário (Building Privilege / TC) para criar uma home nesta base!",
+      NotOnFoundation: "<color=#e74c3c>Fundação Necessária:</color> Você precisa estar pisando em cima de uma Fundação (Foundation) para salvar esta home!",
       AutoDoorToggled: "<color=#2ecc71>AutoDoor:</color> Portas automáticas {0} com tempo de {1}s.",
       RaidAlert: "<color=#e74c3c>[ALERTA DE RAID]</color> Explosão detectada próxima à sua base!"
     }, null, 2);
@@ -969,6 +1070,8 @@ export function generatePluginLangJson(lang: 'pt-BR' | 'en'): string {
     CombatBlocked: "<color=#e74c3c>Blocked:</color> You are in combat! Teleport available in {0}s.",
     KitClaimed: "<color=#2ecc71>Kit Claimed:</color> You received kit <color=#f39c12>{0}</color>!",
     KitCooldown: "<color=#e74c3c>Cooldown:</color> Kit will be ready in {0} seconds.",
+    NoBuildingPrivilege: "<color=#e74c3c>Building Blocked:</color> You do not have Building Privilege (TC authorization) to set a home in this base!",
+    NotOnFoundation: "<color=#e74c3c>Foundation Required:</color> You must be standing directly on a Foundation to set a home here!",
     AutoDoorToggled: "<color=#2ecc71>AutoDoor:</color> Automatic doors {0} with delay of {1}s.",
     RaidAlert: "<color=#e74c3c>[RAID ALERT]</color> Explosives detonated near your base!"
   }, null, 2);

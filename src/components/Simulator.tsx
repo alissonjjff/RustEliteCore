@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PluginConfig, SupportedLanguage } from '../types/plugin';
 import { soundEffects } from '../utils/audio';
-import { Send, Terminal, Play, Shield, RefreshCw, X, Crosshair, Sparkles } from 'lucide-react';
+import { Send, Terminal, Play, Shield, RefreshCw, X, Crosshair, Sparkles, ShieldCheck, Lock, Layers } from 'lucide-react';
 import domeBackdrop from '../assets/images/rust_monument_dome_1791719271169.jpg';
 
 interface SimulatorProps {
@@ -29,6 +29,8 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
   const [chatInput, setChatInput] = useState('');
   const [consoleInput, setConsoleInput] = useState('');
   const [isVipGranted, setIsVipGranted] = useState(false);
+  const [hasBuildingPrivilege, setHasBuildingPrivilege] = useState<boolean>(true);
+  const [isOnFoundation, setIsOnFoundation] = useState<boolean>(true);
   const [showCuiMenu, setShowCuiMenu] = useState(false);
   const [homes, setHomes] = useState<Record<string, { x: number; y: number; z: number }>>({
     'base': { x: 142.5, y: 15.0, z: -890.2 }
@@ -158,7 +160,26 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
         handleClaimKit(args[0].toLowerCase());
       }
     } else if (cmd === '/sethome') {
-      const homeName = args[0] ? args[0].toLowerCase() : 'home';
+      const homeName = args[0] ? args[0].toLowerCase() : 'base';
+      const requireTC = config.requireBuildingPrivilege !== false;
+
+      // Verificação de privilégio de construção na base (TC / Tool Cupboard)
+      if (requireTC && !hasBuildingPrivilege) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> <color=#ff6b6b>Construção Bloqueada:</color> Você não possui autorização no Armário (Building Privilege / TC) para criar uma home nesta base!`);
+        addConsoleLog(`[Homes] GamerBR tentou executar /sethome '${homeName}' em base não autorizada (Building Blocked)`, 'warn');
+        return;
+      }
+
+      // Verificação se exige estar em cima de uma Fundação
+      const requireFoundation = config.requireFoundationOnHome === true;
+      if (requireFoundation && !isOnFoundation) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> <color=#ff6b6b>Fundação Necessária:</color> Você precisa estar pisando em cima de uma Fundação (Foundation) para salvar esta home!`);
+        addConsoleLog(`[Homes] GamerBR tentou executar /sethome '${homeName}' fora de uma fundação (Exigência ativa)`, 'warn');
+        return;
+      }
+
       const maxAllowed = isVipGranted ? config.maxHomesVip : config.maxHomesDefault;
       if (Object.keys(homes).length >= maxAllowed && !homes[homeName]) {
         soundEffects.playError();
@@ -169,16 +190,49 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           [homeName]: { x: Math.floor(Math.random() * 500), y: 20, z: Math.floor(Math.random() * 500) }
         }));
         soundEffects.playLootClaim();
-        addSystemChat(`<color=#2ecc71>[${config.name}]</color> Home '<color=#f39c12>${homeName}</color>' criada na sua posição!`);
+        addSystemChat(`<color=#2ecc71>[${config.name}]</color> Home '<color=#f39c12>${homeName}</color>' criada na sua base com sucesso! (${Object.keys(homes).length + (homes[homeName] ? 0 : 1)}/${maxAllowed})`);
+        addConsoleLog(`[Homes] GamerBR definiu /sethome '${homeName}' com sucesso na base autorizada.`, 'info');
       }
     } else if (cmd === '/home') {
-      const homeName = args[0] ? args[0].toLowerCase() : 'base';
+      if (!args[0] || args[0].toLowerCase() === 'list') {
+        const homeList = Object.keys(homes);
+        const maxAllowed = isVipGranted ? config.maxHomesVip : config.maxHomesDefault;
+        if (homeList.length === 0) {
+          addSystemChat(`<color=#e74c3c>[${config.name}]</color> Você não possui nenhuma home salva. Use <color=#f39c12>/sethome <nome></color>.`);
+        } else {
+          addSystemChat(`<color=#2ecc71>[${config.name}]</color> Suas homes salvas (${homeList.length}/${maxAllowed}): <color=#f39c12>${homeList.join(', ')}</color>. Digite <color=#3498db>/home <nome></color> para teleportar.`);
+        }
+        return;
+      }
+      const homeName = args[0].toLowerCase();
       if (!homes[homeName]) {
         soundEffects.playError();
         addSystemChat(`<color=#e74c3c>[${config.name}]</color> Home '<color=#f39c12>${homeName}</color>' não encontrada. Suas homes: ${Object.keys(homes).join(', ') || 'nenhuma'}`);
       } else {
         addSystemChat(`<color=#3498db>[${config.name}]</color> Teleportando para '<color=#f39c12>${homeName}</color>' em ${config.teleportCountdownSeconds}s. Não se mova!`);
         setTeleportTimer(config.teleportCountdownSeconds);
+      }
+    } else if (cmd === '/delhome' || cmd === '/removehome') {
+      const homeName = args[0] ? args[0].toLowerCase() : '';
+      if (!homeName) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> Uso correto: <color=#f39c12>/delhome <nome></color>`);
+      } else if (!homes[homeName]) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> Home '<color=#f39c12>${homeName}</color>' não existe para remover.`);
+      } else {
+        const updated = { ...homes };
+        delete updated[homeName];
+        setHomes(updated);
+        soundEffects.playClick();
+        addSystemChat(`<color=#2ecc71>[${config.name}]</color> Home '<color=#f39c12>${homeName}</color>' deletada com sucesso! Vaga liberada no seu limite.`);
+      }
+    } else if (cmd === '/canceltp') {
+      if (teleportTimer !== null) {
+        setTeleportTimer(null);
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> Teleporte cancelado com sucesso.`);
+      } else {
+        addSystemChat(`<color=#7f9984>[${config.name}]</color> Nenhum teleporte ativo para cancelar.`);
       }
     } else if (cmd === '/ad' || cmd === '/autodoor') {
       soundEffects.playDoor();
@@ -200,8 +254,32 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
       }));
       soundEffects.playLootClaim();
       addSystemChat(`<color=#2ecc71>[Coleta ${mult}x]</color> +${woodGain} Madeira, +${stoneGain} Pedra coletados!`);
+    } else if (cmd === '/tc' || cmd === '/buildingprivilege') {
+      const next = !hasBuildingPrivilege;
+      setHasBuildingPrivilege(next);
+      if (next) {
+        soundEffects.playClick();
+        addSystemChat(`<color=#2ecc71>[Base / TC]</color> Status alterado para: <color=#a7f3d0>BUILDING PRIVILEGE</color> (Autorizado no Armário da base).`);
+        addConsoleLog(`[Player] GamerBR obteve autorização no TC (Building Privilege).`, 'info');
+      } else {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[Base / TC]</color> Status alterado para: <color=#ff6b6b>BUILDING BLOCKED</color> (Sem permissão no Armário desta base!).`);
+        addConsoleLog(`[Player] GamerBR está agora sem permissão na base (Building Blocked).`, 'warn');
+      }
+    } else if (cmd === '/foundation' || cmd === '/fundacao') {
+      const next = !isOnFoundation;
+      setIsOnFoundation(next);
+      if (next) {
+        soundEffects.playClick();
+        addSystemChat(`<color=#2ecc71>[Posição / Piso]</color> Você agora está <color=#a7f3d0>PISANDO EM UMA FUNDAÇÃO</color> (Foundation).`);
+        addConsoleLog(`[Player] GamerBR subiu em cima de uma fundação.`, 'info');
+      } else {
+        soundEffects.playClick();
+        addSystemChat(`<color=#38bdf8>[Posição / Piso]</color> Você saiu da fundação (está pisando na <color=#fde047>Grama / Chão / Telhado</color>).`);
+        addConsoleLog(`[Player] GamerBR saiu da fundação (agora no solo/terreno).`, 'info');
+      }
     } else if (cmd === '/help') {
-      addSystemChat(`<color=#ce422b>[${config.name}]</color> Comandos: <color=#f39c12>/kit</color>, <color=#f39c12>/sethome <nome></color>, <color=#f39c12>/home <nome></color>, <color=#f39c12>/ad</color>, <color=#f39c12>/rates</color>, <color=#f39c12>/gather_sim</color>`);
+      addSystemChat(`<color=#ce422b>[${config.name}]</color> Comandos: <color=#f39c12>/kit</color>, <color=#f39c12>/sethome <nome></color>, <color=#f39c12>/home [nome]</color>, <color=#f39c12>/delhome <nome></color>, <color=#f39c12>/tc</color>, <color=#f39c12>/foundation</color>, <color=#f39c12>/ad</color>, <color=#f39c12>/rates</color>, <color=#f39c12>/gather_sim</color>`);
     } else {
       addSystemChat(`<color=#e74c3c>[${config.name}]</color> Comando desconhecido. Digite <color=#f39c12>/help</color>`);
     }
@@ -223,22 +301,32 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
 
     soundEffects.playLootClaim();
 
-    if (kitId === 'starter') {
-      setInventoryStats(prev => ({ ...prev, wood: prev.wood + 1000, stone: prev.stone + 1000 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 120 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit STARTER resgatado! (+Machado de Pedra, +Picareta de Pedra, +3 Bandagens, +1000 Madeira, +1000 Pedra)`);
-    } else if (kitId === 'builder') {
-      setInventoryStats(prev => ({ ...prev, wood: prev.wood + 5000, stone: prev.stone + 5000, metal: prev.metal + 2000 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 600 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit BUILDER PRO resgatado! (+Plano, +Martelo, +5000 Madeira, +5000 Pedra, +2000 Metal, +2 Portas de Metal, +2 Code Locks)`);
-    } else if (kitId === 'vip') {
-      setInventoryStats(prev => ({ ...prev, scrap: prev.scrap + 250 }));
-      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 1800 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit VIP ELITE resgatado! (+AK-47, +128 Munição 5.56, +4 Seringas, +Máscara de Metal, +Colete de Metal, +Casaco, +Calça, +250 Scrap)`);
-    } else {
-      setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 300 }));
-      addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit ${targetKit.name} resgatado com sucesso!`);
+    let addWood = 0;
+    let addStone = 0;
+    let addMetal = 0;
+    let addScrap = 0;
+
+    if (targetKit && targetKit.items) {
+      targetKit.items.forEach(it => {
+        const s = (it.shortname || '').toLowerCase();
+        if (s === 'wood') addWood += it.amount;
+        if (s === 'stones' || s === 'stone') addStone += it.amount;
+        if (s === 'metal.fragments') addMetal += it.amount;
+        if (s === 'scrap') addScrap += it.amount;
+      });
     }
+
+    setInventoryStats(prev => ({
+      ...prev,
+      wood: prev.wood + addWood,
+      stone: prev.stone + addStone,
+      metal: prev.metal + addMetal,
+      scrap: prev.scrap + addScrap
+    }));
+
+    setKitCooldowns(prev => ({ ...prev, [kitId]: targetKit?.cooldownSeconds || 120 }));
+    const summary = targetKit?.items?.map(it => `+${it.amount}x ${it.name}`).join(', ') || 'recompensas';
+    addSystemChat(`<color=#2ecc71>[${config.name}]</color> Kit ${targetKit?.name?.toUpperCase() || kitId.toUpperCase()} resgatado! (${summary})`);
 
     setShowCuiMenu(false);
   };
@@ -335,6 +423,56 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             <span>VIP: {isVipGranted ? (lang === 'pt-BR' ? 'Ativo (5x)' : 'Active (5x)') : (lang === 'pt-BR' ? 'Inativo' : 'No VIP')}</span>
           </button>
 
+          {/* Building Privilege / TC Simulator Toggle Button */}
+          <button
+            onClick={() => {
+              soundEffects.playClick();
+              const next = !hasBuildingPrivilege;
+              setHasBuildingPrivilege(next);
+              if (next) {
+                addSystemChat(`<color=#2ecc71>[Base / TC]</color> Você agora possui autorização no Armário (<color=#a7f3d0>BUILDING PRIVILEGE</color>).`);
+                addConsoleLog(`[Player] GamerBR obteve autorização no Armário (TC).`, 'info');
+              } else {
+                addSystemChat(`<color=#e74c3c>[Base / TC]</color> Você está sem permissão na base (<color=#ff6b6b>BUILDING BLOCKED</color>).`);
+                addConsoleLog(`[Player] GamerBR entrou em área sem autorização no TC (Building Blocked).`, 'warn');
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer uppercase tracking-wider ${
+              hasBuildingPrivilege
+                ? 'bg-[#183a1f] border-[#22c55e] text-[#4ade80]'
+                : 'bg-[#331414] border-[#ef4444] text-[#f87171] animate-pulse'
+            }`}
+            title="Clique para alternar permissão de construção na base (TC)"
+          >
+            {hasBuildingPrivilege ? <ShieldCheck className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-[#ef4444]" />}
+            <span>TC: {hasBuildingPrivilege ? (lang === 'pt-BR' ? 'Autorizado' : 'Authorized') : (lang === 'pt-BR' ? 'Sem TC (Blocked)' : 'Blocked')}</span>
+          </button>
+
+          {/* Player Floor / Foundation Position Toggle Button */}
+          <button
+            onClick={() => {
+              soundEffects.playClick();
+              const next = !isOnFoundation;
+              setIsOnFoundation(next);
+              if (next) {
+                addSystemChat(`<color=#2ecc71>[Posição / Piso]</color> Você agora está <color=#a7f3d0>PISANDO EM UMA FUNDAÇÃO</color> (Foundation).`);
+                addConsoleLog(`[Player] GamerBR subiu em cima de uma fundação.`, 'info');
+              } else {
+                addSystemChat(`<color=#38bdf8>[Posição / Piso]</color> Você saiu da fundação (está pisando na <color=#fde047>Grama / Chão / Telhado</color>).`);
+                addConsoleLog(`[Player] GamerBR desceu para o solo/grama.`, 'info');
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border transition-colors cursor-pointer uppercase tracking-wider ${
+              isOnFoundation
+                ? 'bg-[#183a1f] border-[#22c55e] text-[#4ade80]'
+                : 'bg-[#14232e] border-[#3b82f6] text-[#93c5fd]'
+            }`}
+            title="Clique para alternar se o jogador está pisando em fundação física ou não (/foundation)"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Piso: {isOnFoundation ? (lang === 'pt-BR' ? 'Em Fundação' : 'On Foundation') : (lang === 'pt-BR' ? 'Solo / Grama' : 'Ground / Floor')}</span>
+          </button>
+
           <button
             onClick={() => handleExecuteCommand('/gather_sim')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#0f1a12] hover:bg-[#16271a] border border-[#1e3422] text-[#b2c9b6] transition-colors cursor-pointer uppercase tracking-wider"
@@ -382,6 +520,18 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             <span className="text-white">NE</span>
           </div>
 
+          {/* Tactical Resource HUD (Top Right) */}
+          <div className="absolute top-3 right-4 hidden sm:flex items-center gap-2 bg-black/85 border border-[#223b28] px-3 py-1 font-mono text-[11px] text-[#b2c9b6] shadow-md z-10">
+            <span className="text-[#8fa794]">RECURSOS:</span>
+            <span className="text-white">Madeira: <strong className="text-[#4ade80]">{inventoryStats.wood}</strong></span>
+            <span className="text-[#3a5740]">|</span>
+            <span className="text-white">Pedra: <strong className="text-[#4ade80]">{inventoryStats.stone}</strong></span>
+            <span className="text-[#3a5740]">|</span>
+            <span className="text-white">Metal: <strong className="text-[#4ade80]">{inventoryStats.metal}</strong></span>
+            <span className="text-[#3a5740]">|</span>
+            <span className="text-white">Scrap: <strong className="text-[#4ade80]">{inventoryStats.scrap}</strong></span>
+          </div>
+
           {/* Active Teleport Notification */}
           {teleportTimer !== null && (
             <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-[#0c160f]/95 border-2 border-[#22c55e] px-6 py-3 shadow-2xl flex items-center gap-3 animate-pulse font-mono">
@@ -399,7 +549,7 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           <div className="absolute bottom-20 left-4 w-96 max-w-[calc(100%-2rem)] flex flex-col gap-2 z-10 font-mono">
             {/* Quick Chips */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {['/kit', '/sethome base', '/home base', '/ad', '/rates'].map(cmd => (
+              {['/kit', '/sethome base', '/home base', '/home', '/delhome base', '/tc', '/foundation', '/ad', '/rates'].map(cmd => (
                 <button
                   key={cmd}
                   onClick={() => handleExecuteCommand(cmd)}
@@ -453,12 +603,12 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           {/* Rust Hotbar (Bottom Center) - Military HUD Grid */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1 bg-black/85 border border-[#223b28] shadow-2xl">
             {[
+              { name: 'Machado Pedra', code: 'stonehatchet', qty: 1, ammo: '100%' },
+              { name: 'Picareta Pedra', code: 'stone.pickaxe', qty: 1, ammo: '100%' },
+              { name: 'Pedra', code: 'stones', qty: inventoryStats.stone, ammo: '' },
+              { name: 'Madeira', code: 'wood', qty: inventoryStats.wood, ammo: '' },
               { name: 'AK-47', code: 'rifle.ak', qty: 1, ammo: '30/30' },
               { name: 'Seringa Médica', code: 'syringe.medical', qty: 4, ammo: '' },
-              { name: 'Plano de Base', code: 'building.planner', qty: 1, ammo: '' },
-              { name: 'Machado Pedra', code: 'stone.hatchet', qty: 1, ammo: '100%' },
-              { name: 'Madeira', code: 'wood', qty: inventoryStats.wood, ammo: '' },
-              { name: 'Scrap', code: 'scrap', qty: inventoryStats.scrap, ammo: '' },
             ].map((item, idx) => (
               <div
                 key={idx}
@@ -483,6 +633,74 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
 
           {/* Player Vitals HUD (Bottom Right) */}
           <div className="absolute bottom-3 right-4 flex flex-col gap-1.5 w-44 font-mono text-xs">
+            {/* Building Privilege / Blocked HUD Widget - Rust Authentic */}
+            <div
+              onClick={() => {
+                soundEffects.playClick();
+                const next = !hasBuildingPrivilege;
+                setHasBuildingPrivilege(next);
+                if (next) {
+                  addSystemChat(`<color=#2ecc71>[Base / TC]</color> Status: <color=#a7f3d0>BUILDING PRIVILEGE</color> (Autorizado no Armário).`);
+                } else {
+                  addSystemChat(`<color=#e74c3c>[Base / TC]</color> Status: <color=#ff6b6b>BUILDING BLOCKED</color> (Sem permissão nesta base!).`);
+                }
+              }}
+              title="Clique para alternar permissão de construção na base"
+              className={`flex items-center justify-between px-2.5 py-1 border text-xs cursor-pointer select-none transition-colors ${
+                hasBuildingPrivilege
+                  ? 'bg-[#0d2212]/90 border-[#22c55e] text-[#4ade80]'
+                  : 'bg-[#2b0f0f]/90 border-[#ef4444] text-[#f87171] animate-pulse'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 font-bold text-[10px] tracking-wider uppercase">
+                {hasBuildingPrivilege ? (
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#22c55e]" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-[#ef4444]" />
+                )}
+                <span>{hasBuildingPrivilege ? 'BUILDING PRIVILEGE' : 'BUILDING BLOCKED'}</span>
+              </div>
+              <span className={`text-[9px] px-1 py-0.2 font-mono font-bold ${
+                hasBuildingPrivilege
+                  ? 'bg-[#16381e] text-[#a7f3d0] border border-[#22c55e]/50'
+                  : 'bg-[#451212] text-[#fca5a5] border border-[#ef4444]/50'
+              }`}>
+                {hasBuildingPrivilege ? 'TC ATIVO' : 'SEM TC'}
+              </span>
+            </div>
+
+            {/* Foundation Status HUD Widget */}
+            <div
+              onClick={() => {
+                soundEffects.playClick();
+                const next = !isOnFoundation;
+                setIsOnFoundation(next);
+                if (next) {
+                  addSystemChat(`<color=#2ecc71>[Posição / Piso]</color> Status: <color=#a7f3d0>EM FUNDAÇÃO</color> (Piso válido).`);
+                } else {
+                  addSystemChat(`<color=#38bdf8>[Posição / Piso]</color> Status: <color=#fde047>FORA DE FUNDAÇÃO</color> (Grama / Chão).`);
+                }
+              }}
+              title="Clique para alternar se o jogador está pisando em fundação física"
+              className={`flex items-center justify-between px-2.5 py-0.5 border text-xs cursor-pointer select-none transition-colors ${
+                isOnFoundation
+                  ? 'bg-[#0a180e]/90 border-[#22c55e]/70 text-[#86efac]'
+                  : 'bg-[#0f1922]/90 border-[#3b82f6]/70 text-[#93c5fd]'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 font-bold text-[9px] tracking-wider uppercase">
+                <Layers className="w-3 h-3 text-[#38bdf8]" />
+                <span>{isOnFoundation ? 'SOBRE FUNDAÇÃO' : 'FORA DE FUNDAÇÃO'}</span>
+              </div>
+              <span className={`text-[8px] px-1 py-0.2 font-mono font-bold border ${
+                isOnFoundation
+                  ? 'bg-[#122e19] text-[#a7f3d0] border-[#22c55e]/40'
+                  : 'bg-[#12202e] text-[#bae6fd] border-[#3b82f6]/40'
+              }`}>
+                {isOnFoundation ? 'FOUNDATION' : 'GROUND'}
+              </span>
+            </div>
+
             {/* Health Bar */}
             <div className="flex items-center justify-between px-2 py-1 bg-black/85 border border-[#223b28]">
               <span className="font-bold text-[#8fa794]">HP</span>
@@ -555,14 +773,20 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
                             {kit.description}
                           </p>
 
-                          {/* Kit Items Quick Preview */}
-                          <div className="mt-2 pt-2 border-t border-[#18291c] flex flex-col gap-1 text-[10px] text-[#b2c9b6]">
-                            {kit.items.slice(0, 3).map((it, i) => (
-                              <div key={i} className="flex justify-between">
-                                <span className="truncate">{it.name}</span>
-                                <span className="text-[#4ade80] font-bold">x{it.amount}</span>
-                              </div>
-                            ))}
+                          {/* Kit Items Full Preview */}
+                          <div className="mt-2 pt-2 border-t border-[#18291c] flex flex-col gap-1">
+                            <div className="flex items-center justify-between text-[10px] text-[#8fa794]">
+                              <span>ITENS INCLUSOS:</span>
+                              <span className="text-[#4ade80] font-bold">{kit.items.length} itens</span>
+                            </div>
+                            <div className="max-h-28 overflow-y-auto pr-1 flex flex-col gap-1 text-[10px] text-[#b2c9b6]">
+                              {kit.items.map((it, i) => (
+                                <div key={i} className="flex justify-between items-center bg-[#050a06] px-1.5 py-0.5 border border-[#142316]">
+                                  <span className="truncate pr-1">{it.name}</span>
+                                  <span className="text-[#4ade80] font-bold shrink-0">x{it.amount}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
 

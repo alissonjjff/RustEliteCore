@@ -202,7 +202,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({ config, lang }) => {
                 <p className="text-[#8fa794] font-sans text-[11px] mt-1">Recarrega o plugin imediatamente após alterar a config.</p>
               </div>
               <div className="bg-[#070c08] p-3 border border-[#1c3021]">
-                <span className="text-[#4ade80] font-bold">oxide.grant group default rustelite.use</span>
+                <span className="text-[#4ade80] font-bold">oxide.grant group default rustelitecore.use</span>
                 <p className="text-[#8fa794] font-sans text-[11px] mt-1">Libera comandos de kits e homes para jogadores comuns.</p>
               </div>
               <div className="bg-[#070c08] p-3 border border-[#1c3021]">

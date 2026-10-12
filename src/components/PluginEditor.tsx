@@ -3,7 +3,7 @@ import { PluginConfig, SupportedLanguage, KitDefinition } from '../types/plugin'
 import { PLUGIN_TEMPLATES } from '../data/pluginTemplates';
 import { soundEffects } from '../utils/audio';
 import { generatePluginConfigJson } from '../utils/codeGenerators';
-import { Sliders, Plus, Trash2, Shield, Copy, Check, Download, AlertTriangle, Info, ShieldCheck, Terminal, FileCode, CheckCircle2, FileJson } from 'lucide-react';
+import { Sliders, Plus, Trash2, Shield, Copy, Check, Download, AlertTriangle, Info, ShieldCheck, Terminal, FileCode, CheckCircle2, FileJson, Layers, Pickaxe, DoorClosed, Home, Compass, Clock, Swords } from 'lucide-react';
 
 interface PluginEditorProps {
   config: PluginConfig;
@@ -456,133 +456,603 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Gather Multiplier */}
-            {config.enableGatherMultiplier && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Taxa de Coleta Padrão</span>
-                  <span className="text-sm font-black text-[#4ade80]">{config.gatherMultiplier}x</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="0.5"
-                  value={config.gatherMultiplier}
-                  onChange={e => setConfig({ ...config, gatherMultiplier: parseFloat(e.target.value) })}
-                  className="w-full accent-[#22c55e] cursor-pointer"
-                />
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Aplica-se a todos os jogadores comuns</span>
-              </div>
-            )}
-
-            {/* VIP Multiplier */}
-            {config.enableGatherMultiplier && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Taxa de Coleta VIP</span>
-                  <span className="text-sm font-black text-[#86efac]">{config.vipGatherMultiplier}x</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  step="1"
-                  value={config.vipGatherMultiplier}
-                  onChange={e => setConfig({ ...config, vipGatherMultiplier: parseFloat(e.target.value) })}
-                  className="w-full accent-[#22c55e] cursor-pointer"
-                />
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Requer permissão rustelite.vip</span>
-              </div>
-            )}
-
-            {/* Teleport Countdown */}
-            {config.enableTeleport && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Tempo de Espera Teleporte</span>
-                  <span className="text-sm font-black text-white">{config.teleportCountdownSeconds}s</span>
-                </div>
-                <input
-                  type="range"
-                  min="3"
-                  max="60"
-                  step="1"
-                  value={config.teleportCountdownSeconds}
-                  onChange={e => setConfig({ ...config, teleportCountdownSeconds: parseInt(e.target.value) })}
-                  className="w-full accent-[#22c55e] cursor-pointer"
-                />
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Contagem regressiva parada antes do TP</span>
-              </div>
-            )}
-
-            {/* Combat Block Timer */}
-            {config.enableTeleport && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Bloqueio PvP (Combat Block)</span>
-                  <span className="text-sm font-black text-white">{config.combatBlockSeconds}s</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="120"
-                  step="5"
-                  value={config.combatBlockSeconds}
-                  onChange={e => setConfig({ ...config, combatBlockSeconds: parseInt(e.target.value) })}
-                  className="w-full accent-[#22c55e] cursor-pointer"
-                />
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Impede teleporte logo após dano</span>
-              </div>
-            )}
-
-            {/* AutoDoor Delay */}
-            {config.enableAutoDoors && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Fechamento Automático Portas</span>
-                  <span className="text-sm font-black text-white">{config.autoDoorDefaultSeconds}s</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="1"
-                  value={config.autoDoorDefaultSeconds}
-                  onChange={e => setConfig({ ...config, autoDoorDefaultSeconds: parseInt(e.target.value) })}
-                  className="w-full accent-[#22c55e] cursor-pointer"
-                />
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Tempo em segundos até trancar</span>
-              </div>
-            )}
-
-            {/* Homes Limits */}
+          <div className="space-y-6">
+            {/* 1. MÓDULO: SISTEMA DE HOMES (/sethome /home) */}
             {config.enableHomes && (
-              <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
-                <div className="flex justify-between items-center mb-2 font-mono">
-                  <span className="text-xs font-semibold text-[#b2c9b6]">Limite de Homes (Padrão / VIP)</span>
-                  <span className="text-sm font-black text-white">{config.maxHomesDefault} / {config.maxHomesVip}</span>
+              <div className="bg-[#0a120c] border-2 border-[#1e3422] p-5 shadow-xl shadow-black/50">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#18291c] pb-3 mb-4 font-mono">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-[#132717] border border-[#22c55e]/50 flex items-center justify-center">
+                      <Home className="w-4 h-4 text-[#4ade80]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        Configurações do Módulo — Sistema de Homes (/sethome)
+                      </h3>
+                      <span className="text-[11px] text-[#718b77]">
+                        Limites por jogador, exigência de TC (privilégio de base) e piso de fundação
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#4ade80] bg-[#122617] border border-[#234d2a] px-2 py-0.5 font-bold">
+                    [3 CONFIGURAÇÕES INTEGRADAS]
+                  </span>
                 </div>
-                <div className="flex items-center gap-3">
+
+                {/* Grid com os 3 cards específicos de Home */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Card 1: Limite de Homes */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422] flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-2 font-mono">
+                        <span className="text-xs font-semibold text-[#b2c9b6]">Limite de Homes</span>
+                        <span className="text-xs font-black text-white font-mono">
+                          Padrão: <strong className="text-[#4ade80]">{config.maxHomesDefault}</strong> | VIP: <strong className="text-[#fde047]">{config.maxHomesVip}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 my-2">
+                        <div className="w-1/2">
+                          <label className="text-[10px] text-[#8fa794] font-mono block mb-1">PADRÃO</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={config.maxHomesDefault}
+                            onChange={e => setConfig({ ...config, maxHomesDefault: parseInt(e.target.value) || 1 })}
+                            className="w-full bg-[#080d09] border border-[#213725] px-2.5 py-1.5 text-xs text-white font-mono focus:border-[#22c55e] outline-none"
+                          />
+                        </div>
+                        <div className="w-1/2">
+                          <label className="text-[10px] text-[#8fa794] font-mono block mb-1">VIP</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={config.maxHomesVip}
+                            onChange={e => setConfig({ ...config, maxHomesVip: parseInt(e.target.value) || 1 })}
+                            className="w-full bg-[#080d09] border border-[#213725] px-2.5 py-1.5 text-xs text-white font-mono focus:border-[#22c55e] outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-[#718b77] mt-2 block font-mono">
+                      Quantidade máxima de /sethome por categoria
+                    </span>
+                  </div>
+
+                  {/* Card 2: Exigir TC (Armário) */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422] flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-1 font-mono">
+                        <span className="text-xs font-semibold text-[#b2c9b6]">Exigir TC no /sethome</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${
+                          config.requireBuildingPrivilege !== false
+                            ? 'bg-[#142618] text-[#4ade80] border-[#22c55e]'
+                            : 'bg-[#2a1313] text-[#f87171] border-[#ef4444]'
+                        }`}>
+                          {config.requireBuildingPrivilege !== false ? 'PROTEÇÃO ATIVA' : 'LIVRE / SEM TC'}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[#718b77] block font-mono mb-3">
+                        Exige autorização no Armário (Tool Cupboard) para salvar a home
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setConfig({
+                          ...config,
+                          requireBuildingPrivilege: config.requireBuildingPrivilege === false ? true : false
+                        });
+                      }}
+                      className={`w-full py-2 px-3 text-xs font-mono font-bold flex items-center justify-center gap-2 border transition-colors cursor-pointer ${
+                        config.requireBuildingPrivilege !== false
+                          ? 'bg-[#183a1f] border-[#22c55e] text-[#4ade80] hover:bg-[#1e4a28]'
+                          : 'bg-[#241515] border-[#dc2626] text-[#f87171] hover:bg-[#331c1c]'
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      {config.requireBuildingPrivilege !== false ? 'TC Obrigatório (Recomendado)' : 'Livre (Permite em Qualquer Lugar)'}
+                    </button>
+                  </div>
+
+                  {/* Card 3: Estar em Fundação */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422] flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-1 font-mono">
+                        <span className="text-xs font-semibold text-[#b2c9b6]">Estar em Fundação</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${
+                          config.requireFoundationOnHome === true
+                            ? 'bg-[#142618] text-[#4ade80] border-[#22c55e]'
+                            : 'bg-[#162018] text-[#93c5fd] border-[#3b82f6]'
+                        }`}>
+                          {config.requireFoundationOnHome === true ? 'EXIGIR FUNDAÇÃO' : 'NÃO OBRIGATÓRIO'}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[#718b77] block font-mono mb-3">
+                        {config.requireFoundationOnHome === true
+                          ? 'Jogador DEVE estar pisando numa fundação física'
+                          : 'Permite salvar em chão (floor), teto, escadas ou grama'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setConfig({
+                          ...config,
+                          requireFoundationOnHome: !config.requireFoundationOnHome
+                        });
+                      }}
+                      className={`w-full py-2 px-3 text-xs font-mono font-bold flex items-center justify-center gap-2 border transition-colors cursor-pointer ${
+                        config.requireFoundationOnHome === true
+                          ? 'bg-[#183a1f] border-[#22c55e] text-[#4ade80] hover:bg-[#1e4a28]'
+                          : 'bg-[#111c24] border-[#2563eb] text-[#93c5fd] hover:bg-[#172633]'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      {config.requireFoundationOnHome === true ? 'Exigir Fundação Ativado' : 'Qualquer Piso / Chão (Padrão)'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 2. MÓDULO: TELEPORTE GERAL (/tpr /tpa e cooldowns) */}
+            {config.enableTeleport && (
+              <div className="bg-[#0a120c] border border-[#1e3422] p-5 shadow-xl shadow-black/50">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#18291c] pb-3 mb-4 font-mono">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-[#132717] border border-[#22c55e]/50 flex items-center justify-center">
+                      <Compass className="w-4 h-4 text-[#4ade80]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        Configurações do Módulo — Teleporte & Regras PvP
+                      </h3>
+                      <span className="text-[11px] text-[#718b77]">
+                        Tempos de espera parado e bloqueio após combate (Combat Block)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#86efac] bg-[#122617] border border-[#234d2a] px-2 py-0.5 font-bold">
+                    [TELEPORTAÇÃO GERAL]
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Teleport Countdown */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
+                    <div className="flex justify-between items-center mb-2 font-mono">
+                      <span className="text-xs font-semibold text-[#b2c9b6] flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#22c55e]" />
+                        Tempo de Espera Teleporte
+                      </span>
+                      <span className="text-sm font-black text-white">{config.teleportCountdownSeconds}s</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="3"
+                      max="60"
+                      step="1"
+                      value={config.teleportCountdownSeconds}
+                      onChange={e => setConfig({ ...config, teleportCountdownSeconds: parseInt(e.target.value) })}
+                      className="w-full accent-[#22c55e] cursor-pointer my-1"
+                    />
+                    <span className="text-[11px] text-[#718b77] mt-1 block font-mono">
+                      Contagem regressiva parada antes do TP (mover-se cancela)
+                    </span>
+                  </div>
+
+                  {/* Combat Block Timer */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
+                    <div className="flex justify-between items-center mb-2 font-mono">
+                      <span className="text-xs font-semibold text-[#b2c9b6] flex items-center gap-1.5">
+                        <Swords className="w-3.5 h-3.5 text-[#ef4444]" />
+                        Bloqueio PvP (Combat Block)
+                      </span>
+                      <span className="text-sm font-black text-white">{config.combatBlockSeconds}s</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="120"
+                      step="5"
+                      value={config.combatBlockSeconds}
+                      onChange={e => setConfig({ ...config, combatBlockSeconds: parseInt(e.target.value) })}
+                      className="w-full accent-[#22c55e] cursor-pointer my-1"
+                    />
+                    <span className="text-[11px] text-[#718b77] mt-1 block font-mono">
+                      Impede teleporte logo após dar ou receber dano PvP
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. MÓDULO: MULTIPLICADOR DE COLETA (RATES) */}
+            {config.enableGatherMultiplier && (
+              <div className="bg-[#0a120c] border border-[#1e3422] p-5 shadow-xl shadow-black/50">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#18291c] pb-3 mb-4 font-mono">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-[#132717] border border-[#22c55e]/50 flex items-center justify-center">
+                      <Pickaxe className="w-4 h-4 text-[#4ade80]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        Configurações do Módulo — Taxas de Coleta (Gather Rates)
+                      </h3>
+                      <span className="text-[11px] text-[#718b77]">
+                        Multiplicador de madeira, pedra, enxofre e metal para jogadores comuns e VIPs
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#86efac] bg-[#122617] border border-[#234d2a] px-2 py-0.5 font-bold">
+                    [COLETA & BALANCEAMENTO]
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Gather Multiplier */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
+                    <div className="flex justify-between items-center mb-2 font-mono">
+                      <span className="text-xs font-semibold text-[#b2c9b6]">Taxa de Coleta Padrão</span>
+                      <span className="text-sm font-black text-[#4ade80]">{config.gatherMultiplier}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      step="0.5"
+                      value={config.gatherMultiplier}
+                      onChange={e => setConfig({ ...config, gatherMultiplier: parseFloat(e.target.value) })}
+                      className="w-full accent-[#22c55e] cursor-pointer my-1"
+                    />
+                    <span className="text-[11px] text-[#718b77] mt-1 block font-mono">
+                      Aplica-se a todos os jogadores comuns do servidor
+                    </span>
+                  </div>
+
+                  {/* VIP Multiplier */}
+                  <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
+                    <div className="flex justify-between items-center mb-2 font-mono">
+                      <span className="text-xs font-semibold text-[#b2c9b6]">Taxa de Coleta VIP</span>
+                      <span className="text-sm font-black text-[#86efac]">{config.vipGatherMultiplier}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="50"
+                      step="1"
+                      value={config.vipGatherMultiplier}
+                      onChange={e => setConfig({ ...config, vipGatherMultiplier: parseFloat(e.target.value) })}
+                      className="w-full accent-[#22c55e] cursor-pointer my-1"
+                    />
+                    <span className="text-[11px] text-[#718b77] mt-1 block font-mono">
+                      Requer a permissão Oxide <code className="text-[#86efac]">rustelite.vip</code>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. MÓDULO: PORTAS AUTOMÁTICAS (/ad /autodoors) */}
+            {config.enableAutoDoors && (
+              <div className="bg-[#0a120c] border border-[#1e3422] p-5 shadow-xl shadow-black/50">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#18291c] pb-3 mb-4 font-mono">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-[#132717] border border-[#22c55e]/50 flex items-center justify-center">
+                      <DoorClosed className="w-4 h-4 text-[#4ade80]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        Configurações do Módulo — Portas Automáticas (/ad)
+                      </h3>
+                      <span className="text-[11px] text-[#718b77]">
+                        Tempo de fechamento de portas simples, blindadas e escotilhas
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#86efac] bg-[#122617] border border-[#234d2a] px-2 py-0.5 font-bold">
+                    [AUTODOOR DELAY]
+                  </span>
+                </div>
+
+                <div className="bg-[#0f1a12] p-4 border border-[#1e3422]">
+                  <div className="flex justify-between items-center mb-2 font-mono">
+                    <span className="text-xs font-semibold text-[#b2c9b6]">Fechamento Automático de Portas</span>
+                    <span className="text-sm font-black text-white">{config.autoDoorDefaultSeconds}s</span>
+                  </div>
                   <input
-                    type="number"
+                    type="range"
                     min="1"
                     max="20"
-                    value={config.maxHomesDefault}
-                    onChange={e => setConfig({ ...config, maxHomesDefault: parseInt(e.target.value) || 1 })}
-                    className="w-1/2 bg-[#080d09] border border-[#213725] px-2 py-1 text-xs text-white font-mono"
+                    step="1"
+                    value={config.autoDoorDefaultSeconds}
+                    onChange={e => setConfig({ ...config, autoDoorDefaultSeconds: parseInt(e.target.value) })}
+                    className="w-full accent-[#22c55e] cursor-pointer my-1"
                   />
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={config.maxHomesVip}
-                    onChange={e => setConfig({ ...config, maxHomesVip: parseInt(e.target.value) || 1 })}
-                    className="w-1/2 bg-[#080d09] border border-[#213725] px-2 py-1 text-xs text-white font-mono"
-                  />
+                  <span className="text-[11px] text-[#718b77] mt-1 block font-mono">
+                    Tempo em segundos até fechar e trancar a porta após o jogador passar
+                  </span>
                 </div>
-                <span className="text-[11px] text-[#718b77] mt-1 block font-mono">Máximo de /sethome permitidos</span>
+              </div>
+            )}
+
+            {/* Div Informativa de Comandos Usáveis do Sistema de Homes */}
+            {config.enableHomes && (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-[#0a120c] border border-[#1e3422] p-5 shadow-lg shadow-black/50 font-mono">
+                {/* Header Militar / Tech */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#18291c] pb-3 mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 bg-[#22c55e]" />
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Terminal className="w-3.5 h-3.5 text-[#22c55e]" />
+                      Comandos Usáveis — Sistema de Homes
+                    </h3>
+                    <span className="text-[10px] text-[#86efac] bg-[#122617] border border-[#234d2a] px-2 py-0.5">
+                      [MÓDULO ATIVO]
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#718b77]">
+                    <span className="bg-[#080d09] px-2 py-0.5 border border-[#1a2d1d]">
+                      Permissão Padrão: <strong className="text-[#a7f3d0]">rustelitecore.use</strong>
+                    </span>
+                    <span className="bg-[#080d09] px-2 py-0.5 border border-[#1a2d1d]">
+                      Permissão VIP: <strong className="text-[#fde047]">rustelitecore.vip</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Subtitle / Description */}
+                <p className="text-xs text-[#8fa794] font-sans mb-4">
+                  Estes são os comandos de chat disponíveis para os jogadores no servidor Rust para criar bases, listar e teleportar para suas homes configuradas:
+                </p>
+
+                {/* Grid dos Comandos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  {/* /sethome */}
+                  <div className="bg-[#0f1a12] border border-[#1c3021] p-3.5 flex flex-col justify-between hover:border-[#22c55e]/40 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="bg-[#070c08] border border-[#234d2a] px-2.5 py-1 text-xs font-bold text-[#4ade80] tracking-wider select-all">
+                          /sethome &lt;nome&gt;
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText('/sethome base', 'cmd_sethome')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-[11px] bg-[#142618] hover:bg-[#1e3b24] border border-[#234d2a] text-[#b2c9b6] hover:text-white transition-colors cursor-pointer"
+                          title="Copiar comando de exemplo"
+                        >
+                          {copiedText === 'cmd_sethome' ? (
+                            <>
+                              <Check className="w-3 h-3 text-[#22c55e]" />
+                              <span className="text-[#22c55e]">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#d1ded4] font-sans mb-2 font-medium">
+                        Cria ou atualiza uma home na posição exata onde o jogador está pisando.
+                      </p>
+                      <div className="text-[11px] text-[#718b77] space-y-1">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Exemplo:</strong> <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/sethome base</code> ou <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/sethome farm</code></span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Capacidade:</strong> Até <strong className="text-white">{config.maxHomesDefault}</strong> (Padrão) / <strong className="text-[#fde047]">{config.maxHomesVip}</strong> (VIP)</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span>
+                            <strong>Permissão na Base (TC):</strong>{' '}
+                            {config.requireBuildingPrivilege !== false ? (
+                              <span className="text-[#86efac]">
+                                <strong className="text-[#4ade80]">OBRIGATÓRIO</strong> (Exige armário TC autorizado. Jogador não consegue criar home em base de inimigo).
+                              </span>
+                            ) : (
+                              <span className="text-[#fca5a5]">
+                                <strong className="text-[#ef4444]">DESATIVADO</strong> (Livre. Jogador consegue criar home mesmo sem permissão na base).
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span>
+                            <strong>Estar em Fundação:</strong>{' '}
+                            {config.requireFoundationOnHome === true ? (
+                              <span className="text-[#86efac]">
+                                <strong className="text-[#4ade80]">EXIGIDO</strong> (O jogador precisa estar pisando em uma fundação de madeira, pedra ou metal).
+                              </span>
+                            ) : (
+                              <span className="text-[#93c5fd]">
+                                <strong className="text-[#60a5fa]">NÃO EXIGIDO</strong> (Permite salvar no 2º andar em teto/chão, escada ou terreno protegido).
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* /home */}
+                  <div className="bg-[#0f1a12] border border-[#1c3021] p-3.5 flex flex-col justify-between hover:border-[#22c55e]/40 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="bg-[#070c08] border border-[#234d2a] px-2.5 py-1 text-xs font-bold text-[#4ade80] tracking-wider select-all">
+                          /home &lt;nome&gt;
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText('/home base', 'cmd_home')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-[11px] bg-[#142618] hover:bg-[#1e3b24] border border-[#234d2a] text-[#b2c9b6] hover:text-white transition-colors cursor-pointer"
+                          title="Copiar comando de exemplo"
+                        >
+                          {copiedText === 'cmd_home' ? (
+                            <>
+                              <Check className="w-3 h-3 text-[#22c55e]" />
+                              <span className="text-[#22c55e]">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#d1ded4] font-sans mb-2 font-medium">
+                        Inicia a contagem regressiva e teleporta o jogador para a base salva.
+                      </p>
+                      <div className="text-[11px] text-[#718b77] space-y-1">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Exemplo:</strong> <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/home base</code></span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Tempo de Espera:</strong> <strong className="text-white">{config.teleportCountdownSeconds}s</strong> imóvel (qualquer passo ou dano cancela).</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Combat Block:</strong> Bloqueado por <strong className="text-[#ef4444]">{config.combatBlockSeconds}s</strong> após dano PvP recebido.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* /home list */}
+                  <div className="bg-[#0f1a12] border border-[#1c3021] p-3.5 flex flex-col justify-between hover:border-[#22c55e]/40 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="bg-[#070c08] border border-[#234d2a] px-2.5 py-1 text-xs font-bold text-[#4ade80] tracking-wider select-all">
+                          /home ou /home list
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText('/home', 'cmd_homelist')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-[11px] bg-[#142618] hover:bg-[#1e3b24] border border-[#234d2a] text-[#b2c9b6] hover:text-white transition-colors cursor-pointer"
+                          title="Copiar comando de exemplo"
+                        >
+                          {copiedText === 'cmd_homelist' ? (
+                            <>
+                              <Check className="w-3 h-3 text-[#22c55e]" />
+                              <span className="text-[#22c55e]">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#d1ded4] font-sans mb-2 font-medium">
+                        Lista no chat todas as bases salvas do jogador e informa quantas vagas ainda restam.
+                      </p>
+                      <div className="text-[11px] text-[#718b77] space-y-1">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Exemplo:</strong> <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/home</code> (sem argumentos)</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Retorno no Chat:</strong> <span className="text-[#86efac]">"Suas homes: base, farm (2/{config.maxHomesDefault})"</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* /delhome & /removehome */}
+                  <div className="bg-[#0f1a12] border border-[#1c3021] p-3.5 flex flex-col justify-between hover:border-[#22c55e]/40 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="bg-[#070c08] border border-[#234d2a] px-2.5 py-1 text-xs font-bold text-[#4ade80] tracking-wider select-all">
+                          /delhome &lt;nome&gt;
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText('/delhome base', 'cmd_delhome')}
+                          className="flex items-center gap-1 px-2 py-0.5 text-[11px] bg-[#142618] hover:bg-[#1e3b24] border border-[#234d2a] text-[#b2c9b6] hover:text-white transition-colors cursor-pointer"
+                          title="Copiar comando de exemplo"
+                        >
+                          {copiedText === 'cmd_delhome' ? (
+                            <>
+                              <Check className="w-3 h-3 text-[#22c55e]" />
+                              <span className="text-[#22c55e]">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#d1ded4] font-sans mb-2 font-medium">
+                        Exclui permanentemente a home cadastrada, liberando espaço para criar uma nova.
+                      </p>
+                      <div className="text-[11px] text-[#718b77] space-y-1">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Exemplo:</strong> <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/delhome farm</code></span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[#22c55e]">•</span>
+                          <span><strong>Alias aceito:</strong> <code className="text-[#a7f3d0] bg-[#070c08] px-1 py-0.5 border border-[#1b2f1e]">/removehome &lt;nome&gt;</code></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tactical Parameters Strip */}
+                <div className="bg-[#080d09] border border-[#18291c] p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-4 text-[#8fa794]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[#22c55e]" />
+                      <span>Limite Normal: <strong className="text-white font-mono">{config.maxHomesDefault}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[#fde047]" />
+                      <span>Limite VIP: <strong className="text-white font-mono">{config.maxHomesVip}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[#38bdf8]" />
+                      <span>Espera Teleporte: <strong className="text-white font-mono">{config.teleportCountdownSeconds}s</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-[#ef4444]" />
+                      <span>PvP Combat Block: <strong className="text-white font-mono">{config.combatBlockSeconds}s</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 ${config.requireBuildingPrivilege !== false ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+                      <span>Checagem TC: <strong className={`font-mono ${config.requireBuildingPrivilege !== false ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
+                        {config.requireBuildingPrivilege !== false ? 'Obrigatório' : 'Desativado'}
+                      </strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 ${config.requireFoundationOnHome === true ? 'bg-[#22c55e]' : 'bg-[#3b82f6]'}`} />
+                      <span>Fundação: <strong className={`font-mono ${config.requireFoundationOnHome === true ? 'text-[#4ade80]' : 'text-[#93c5fd]'}`}>
+                        {config.requireFoundationOnHome === true ? 'Exigida' : 'Qualquer Piso'}
+                      </strong></span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-[#4ade80] font-mono flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-[#22c55e] animate-pulse" />
+                    <span>Pronto para teste no Simulador In-Game abaixo!</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -807,18 +1277,20 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
                     <select
                       id={`select-item-${kit.id}`}
                       className="flex-1 bg-[#080d09] border border-[#213725] px-2 py-1 text-xs text-[#b2c9b6] focus:outline-none font-mono"
-                      defaultValue="rifle.ak"
+                      defaultValue="stonehatchet"
                     >
+                      <option value="stonehatchet">Machado de Pedra (1x)</option>
+                      <option value="stone.pickaxe">Picareta de Pedra (1x)</option>
+                      <option value="stones">Pedra (1000x)</option>
+                      <option value="wood">Madeira (1000x)</option>
+                      <option value="bandage">Bandagem (5x)</option>
                       <option value="rifle.ak">AK-47 (1x)</option>
                       <option value="ammo.rifle">Munição 5.56 (128x)</option>
                       <option value="syringe.medical">Seringa Médica (4x)</option>
                       <option value="explosive.timed">C4 Explosivo (2x)</option>
-                      <option value="wood">Madeira (1000x)</option>
-                      <option value="stone">Pedra (1000x)</option>
                       <option value="metal.fragments">Fragmentos de Metal (1000x)</option>
                       <option value="sulfur">Enxofre (500x)</option>
                       <option value="scrap">Scrap (250x)</option>
-                      <option value="bandage">Bandagem (5x)</option>
                       <option value="metal.facemask">Máscara de Metal (1x)</option>
                       <option value="metal.plate.torso">Colete de Metal (1x)</option>
                       <option value="door.hinged.metal">Porta de Metal (2x)</option>
@@ -829,18 +1301,25 @@ export const PluginEditor: React.FC<PluginEditorProps> = ({ config, setConfig, l
                       onClick={() => {
                         const sel = document.getElementById(`select-item-${kit.id}`) as HTMLSelectElement;
                         if (!sel) return;
-                        const val = sel.value;
+                        let val = sel.value;
+                        if (val === 'stone') val = 'stones';
+                        if (val === 'stone.hatchet') val = 'stonehatchet';
+
                         const defaults: Record<string, { name: string; amount: number }> = {
+                          'stonehatchet': { name: 'Machado de Pedra', amount: 1 },
+                          'stone.hatchet': { name: 'Machado de Pedra', amount: 1 },
+                          'stone.pickaxe': { name: 'Picareta de Pedra', amount: 1 },
+                          'stones': { name: 'Pedra', amount: 1000 },
+                          'stone': { name: 'Pedra', amount: 1000 },
+                          'wood': { name: 'Madeira', amount: 1000 },
+                          'bandage': { name: 'Bandagem', amount: 5 },
                           'rifle.ak': { name: 'Assault Rifle (AK-47)', amount: 1 },
                           'ammo.rifle': { name: 'Munição 5.56', amount: 128 },
                           'syringe.medical': { name: 'Seringa Médica', amount: 4 },
                           'explosive.timed': { name: 'C4 (Timed Explosive)', amount: 2 },
-                          'wood': { name: 'Madeira', amount: 1000 },
-                          'stone': { name: 'Pedra', amount: 1000 },
                           'metal.fragments': { name: 'Fragmentos de Metal', amount: 1000 },
                           'sulfur': { name: 'Enxofre', amount: 500 },
                           'scrap': { name: 'Scrap (Sucata)', amount: 250 },
-                          'bandage': { name: 'Bandagem', amount: 5 },
                           'metal.facemask': { name: 'Máscara Facial de Metal', amount: 1 },
                           'metal.plate.torso': { name: 'Colete de Metal', amount: 1 },
                           'door.hinged.metal': { name: 'Porta de Metal', amount: 2 },

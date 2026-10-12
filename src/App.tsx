@@ -11,6 +11,55 @@ import { soundEffects } from './utils/audio';
 import { CheckCircle2, Shield, Flame, Terminal, Download, Cpu } from 'lucide-react';
 import workbenchHero from './assets/images/rust_workbench_gear_1791719285928.jpg';
 
+const normalizeKits = (rawKits: any[]) => {
+  if (!Array.isArray(rawKits)) return PLUGIN_TEMPLATES.rustEliteCore.kits;
+  return rawKits.map(kit => {
+    let items = Array.isArray(kit.items) ? kit.items.map((item: any) => {
+      let shortname = item.shortname || '';
+      let name = item.name || '';
+      if (shortname === 'stone') {
+        shortname = 'stones';
+        if (!name || name === 'stone') name = 'Pedra';
+      }
+      if (shortname === 'stone.hatchet') {
+        shortname = 'stonehatchet';
+        if (!name || name === 'stone.hatchet') name = 'Machado de Pedra';
+      }
+      return {
+        ...item,
+        shortname,
+        name: name || shortname,
+        amount: Number(item.amount) || 1
+      };
+    }) : [];
+
+    // Ensure starter kit has Machado de Pedra and Pedra
+    if (kit.id === 'starter') {
+      const hasHatchet = items.some((it: any) => it.shortname === 'stonehatchet' || it.shortname === 'stone.hatchet');
+      const hasStones = items.some((it: any) => it.shortname === 'stones' || it.shortname === 'stone');
+      if (!hasHatchet) {
+        items.unshift({ shortname: 'stonehatchet', name: 'Machado de Pedra', amount: 1, container: 'belt' });
+      }
+      if (!hasStones) {
+        items.push({ shortname: 'stones', name: 'Pedra', amount: 1000, container: 'main' });
+      }
+    }
+
+    // Ensure builder kit has Pedra
+    if (kit.id === 'builder') {
+      const hasStones = items.some((it: any) => it.shortname === 'stones' || it.shortname === 'stone');
+      if (!hasStones) {
+        items.splice(3, 0, { shortname: 'stones', name: 'Pedra', amount: 5000, container: 'main' });
+      }
+    }
+
+    return {
+      ...kit,
+      items
+    };
+  });
+};
+
 export default function App() {
   const [config, setConfig] = useState<PluginConfig>(() => {
     try {
@@ -22,12 +71,19 @@ export default function App() {
           name: 'RustEliteCore',
           version: '2.2.3',
           author: 'brtaskgamer',
+          kits: normalizeKits(parsed.kits || PLUGIN_TEMPLATES.rustEliteCore.kits)
         };
       }
     } catch {
       // fallback
     }
-    return { ...PLUGIN_TEMPLATES.rustEliteCore, name: 'RustEliteCore', version: '2.2.3', author: 'brtaskgamer' };
+    return {
+      ...PLUGIN_TEMPLATES.rustEliteCore,
+      name: 'RustEliteCore',
+      version: '2.2.3',
+      author: 'brtaskgamer',
+      kits: normalizeKits(PLUGIN_TEMPLATES.rustEliteCore.kits)
+    };
   });
 
   const [activeTab, setActiveTab] = useState<'simulator' | 'editor' | 'code' | 'cui'>('simulator');

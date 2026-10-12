@@ -25,6 +25,8 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
     teleportCountdownSeconds: 15,
     teleportCooldownSeconds: 60,
     combatBlockSeconds: 30,
+    requireBuildingPrivilege: true,
+    requireFoundationOnHome: false,
     autoDoorDefaultSeconds: 5,
     discordWebhookUrl: 'https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE',
 
@@ -36,11 +38,11 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
         cooldownSeconds: 120,
         icon: 'pickaxe',
         items: [
-          { shortname: 'stone.hatchet', name: 'Machado de Pedra', amount: 1, container: 'belt' },
+          { shortname: 'stonehatchet', name: 'Machado de Pedra', amount: 1, container: 'belt' },
           { shortname: 'stone.pickaxe', name: 'Picareta de Pedra', amount: 1, container: 'belt' },
           { shortname: 'bandage', name: 'Bandagem', amount: 3, container: 'belt' },
           { shortname: 'wood', name: 'Madeira', amount: 1000, container: 'main' },
-          { shortname: 'stone', name: 'Pedra', amount: 1000, container: 'main' }
+          { shortname: 'stones', name: 'Pedra', amount: 1000, container: 'main' }
         ]
       },
       {
@@ -53,7 +55,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
           { shortname: 'building.planner', name: 'Plano de Construção', amount: 1, container: 'belt' },
           { shortname: 'hammer', name: 'Martelo', amount: 1, container: 'belt' },
           { shortname: 'wood', name: 'Madeira', amount: 5000, container: 'main' },
-          { shortname: 'stone', name: 'Pedra', amount: 5000, container: 'main' },
+          { shortname: 'stones', name: 'Pedra', amount: 5000, container: 'main' },
           { shortname: 'metal.fragments', name: 'Fragmentos de Metal', amount: 2000, container: 'main' },
           { shortname: 'door.hinged.metal', name: 'Porta de Metal', amount: 2, container: 'main' },
           { shortname: 'lock.code', name: 'Code Lock', amount: 2, container: 'main' }
@@ -125,7 +127,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
         cooldownSeconds: 60,
         icon: 'pickaxe',
         items: [
-          { shortname: 'stone.hatchet', name: 'Machado de Pedra', amount: 1, container: 'belt' },
+          { shortname: 'stonehatchet', name: 'Machado de Pedra', amount: 1, container: 'belt' },
           { shortname: 'stone.pickaxe', name: 'Picareta de Pedra', amount: 1, container: 'belt' },
           { shortname: 'can.beans', name: 'Lata de Feijão', amount: 2, container: 'main' }
         ]
@@ -232,6 +234,8 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
     teleportCountdownSeconds: 10,
     teleportCooldownSeconds: 45,
     combatBlockSeconds: 30,
+    requireBuildingPrivilege: true,
+    requireFoundationOnHome: false,
     autoDoorDefaultSeconds: 0,
     discordWebhookUrl: '',
 

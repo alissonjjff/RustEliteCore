@@ -32,7 +32,7 @@ export const POPULAR_RUST_ITEMS: RustItemOption[] = [
 
   // Recursos
   { shortname: 'wood', name: 'Madeira', category: 'recursos', defaultAmount: 1000 },
-  { shortname: 'stone', name: 'Pedra', category: 'recursos', defaultAmount: 1000 },
+  { shortname: 'stones', name: 'Pedra', category: 'recursos', defaultAmount: 1000 },
   { shortname: 'metal.fragments', name: 'Fragmentos de Metal', category: 'recursos', defaultAmount: 1000 },
   { shortname: 'metal.refined', name: 'Metal de Alta Qualidade (HQM)', category: 'recursos', defaultAmount: 50 },
   { shortname: 'sulfur', name: 'Enxofre Refinado', category: 'recursos', defaultAmount: 500 },
@@ -46,7 +46,7 @@ export const POPULAR_RUST_ITEMS: RustItemOption[] = [
   { shortname: 'door.hinged.metal', name: 'Porta de Metal', category: 'construcao', defaultAmount: 2 },
   { shortname: 'door.hinged.toptier', name: 'Porta Blindada (Armored)', category: 'construcao', defaultAmount: 1 },
   { shortname: 'lock.code', name: 'Code Lock', category: 'construcao', defaultAmount: 2 },
-  { shortname: 'stone.hatchet', name: 'Machado de Pedra', category: 'ferramentas', defaultAmount: 1 },
+  { shortname: 'stonehatchet', name: 'Machado de Pedra', category: 'ferramentas', defaultAmount: 1 },
   { shortname: 'stone.pickaxe', name: 'Picareta de Pedra', category: 'ferramentas', defaultAmount: 1 },
   { shortname: 'axe.salvaged', name: 'Machado Refinado', category: 'ferramentas', defaultAmount: 1 },
   { shortname: 'icepick.salvaged', name: 'Picareta de Gelo', category: 'ferramentas', defaultAmount: 1 },

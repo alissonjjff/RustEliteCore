@@ -50,6 +50,8 @@ export interface PluginConfig {
   teleportCountdownSeconds: number;
   teleportCooldownSeconds: number;
   combatBlockSeconds: number;
+  requireBuildingPrivilege?: boolean;
+  requireFoundationOnHome?: boolean;
   autoDoorDefaultSeconds: number;
   discordWebhookUrl: string;
 
