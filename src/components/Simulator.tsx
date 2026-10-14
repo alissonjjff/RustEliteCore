@@ -239,21 +239,91 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
       const nextState = !autoDoorsActive;
       setAutoDoorsActive(nextState);
       addSystemChat(`<color=#2ecc71>[${config.name}]</color> AutoDoor: ${nextState ? '<color=#2ecc71>ATIVADO (fechando em 5s)</color>' : '<color=#e74c3c>DESATIVADO</color>'}`);
-    } else if (cmd === '/rates' || cmd === '/gather') {
+    } else if (cmd === '/rates' || cmd === '/taxas' || cmd === '/gather') {
+      if (!config.enableGatherMultiplier) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> O módulo de Taxas de Coleta (Gather Rates) está <color=#e74c3c>DESATIVADO</color> no editor.`);
+        return;
+      }
       const rate = isVipGranted ? config.vipGatherMultiplier : config.gatherMultiplier;
-      addSystemChat(`<color=#ce422b>[${config.name}]</color> Multiplicador atual: <color=#2ecc71>${rate}x</color>${isVipGranted ? ' (Bônus VIP Ativo)' : ' (Padrão)'}. Auto-Smelt: ${config.enableAutoSmelt ? 'Ligado' : 'Desligado'}.`);
-    } else if (cmd === '/gather_sim') {
-      // Simulate gathering
+      addSystemChat(`<color=#ce422b>[${config.name}]</color> Multiplicador atual: <color=#2ecc71>${rate}x</color>${isVipGranted ? ' <color=#f1c40f>[Bônus VIP Ativo]</color>' : ' <color=#7f8c8d>[Padrão]</color>'}. Padrão: <color=#f39c12>${config.gatherMultiplier}x</color> | VIP: <color=#f1c40f>${config.vipGatherMultiplier}x</color>.`);
+      addSystemChat(`<color=#ce422b>[${config.name}]</color> Eficiência de Ferramentas: ${config.enableFullGatherEfficiency ? '<color=#2ecc71>FORÇADA 100% (Todas as ferramentas rendem 100%)</color>' : '<color=#e67e22>VANILLA PROGRESSIVO (Britadeira=100%, Picareta Metal=77.5%, Pedra=64.5%)</color>'}. Auto-Smelt: ${config.enableAutoSmelt ? '<color=#2ecc71>LIGADO</color>' : '<color=#e74c3c>DESLIGADO</color>'}.`);
+    } else if (cmd === '/gather_sim' || cmd === '/farm' || cmd === '/minar') {
+      if (!config.enableGatherMultiplier) {
+        soundEffects.playError();
+        addSystemChat(`<color=#e74c3c>[${config.name}]</color> O módulo de Taxas de Coleta está <color=#e74c3c>DESATIVADO</color> nas configurações.`);
+        return;
+      }
+      
       const mult = isVipGranted ? config.vipGatherMultiplier : config.gatherMultiplier;
-      const woodGain = Math.floor(100 * mult);
-      const stoneGain = Math.floor(50 * mult);
+      const targetTool = (args[0] || 'jackhammer').toLowerCase();
+      
+      let toolName = 'Britadeira (Jackhammer)';
+      let baseYield = 1000;
+      let nativeEfficiency = '100%';
+      let hitsYield = 750;
+      let bonusYield = 250;
+
+      if (targetTool.includes('metal') || targetTool.includes('pickaxe')) {
+        toolName = 'Picareta de Metal';
+        nativeEfficiency = '77.5%';
+        if (config.enableFullGatherEfficiency) {
+          baseYield = 1000;
+          hitsYield = 750;
+          bonusYield = 250;
+        } else {
+          baseYield = 775;
+          hitsYield = 581;
+          bonusYield = 194;
+        }
+      } else if (targetTool.includes('stone') || targetTool.includes('pedra')) {
+        toolName = 'Picareta de Pedra';
+        nativeEfficiency = '64.5%';
+        if (config.enableFullGatherEfficiency) {
+          baseYield = 1000;
+          hitsYield = 750;
+          bonusYield = 250;
+        } else {
+          baseYield = 645;
+          hitsYield = 484;
+          bonusYield = 161;
+        }
+      } else if (targetTool.includes('rock')) {
+        toolName = 'Pedra Inicial (Rock)';
+        nativeEfficiency = '40.0%';
+        if (config.enableFullGatherEfficiency) {
+          baseYield = 1000;
+          hitsYield = 1000;
+          bonusYield = 0;
+        } else {
+          baseYield = 400;
+          hitsYield = 400;
+          bonusYield = 0;
+        }
+      } else {
+        // Jackhammer / Britadeira
+        toolName = 'Britadeira / Jackhammer';
+        nativeEfficiency = '100%';
+        baseYield = 1000;
+        hitsYield = 750;
+        bonusYield = 250;
+      }
+
+      const totalStoneGain = Math.round(baseYield * mult);
+      const hitsStoneGain = Math.round(hitsYield * mult);
+      const bonusStoneGain = Math.round(bonusYield * mult);
+
       setInventoryStats(prev => ({
         ...prev,
-        wood: prev.wood + woodGain,
-        stone: prev.stone + stoneGain
+        stone: prev.stone + totalStoneGain,
+        metal: prev.metal + (config.enableAutoSmelt ? Math.round(200 * mult) : 0),
       }));
       soundEffects.playLootClaim();
-      addSystemChat(`<color=#2ecc71>[Coleta ${mult}x]</color> +${woodGain} Madeira, +${stoneGain} Pedra coletados!`);
+
+      addSystemChat(`<color=#ce422b>[${config.name}]</color> <color=#4ade80>⛏️ Mineração de 1 Nó de Pedra (1.000 HP Vanilla)</color>`);
+      addSystemChat(`  • Ferramenta: <color=#f1c40f>${toolName}</color> (Eficiência Vanilla: ${nativeEfficiency})`);
+      addSystemChat(`  • Modo Forçar 100%: ${config.enableFullGatherEfficiency ? '<color=#4ade80>ATIVADO (Forçado 100% Flat)</color>' : '<color=#86efac>DESATIVADO (Sistema Natural de Eficiência Ativo)</color>'}`);
+      addSystemChat(`  • Rendimento: <color=#2ecc71>+${totalStoneGain.toLocaleString()} Pedra</color> coletadas! (${hitsStoneGain.toLocaleString()} nas batidas + ${bonusStoneGain.toLocaleString()} bônus final OnDispenserBonus)`);
     } else if (cmd === '/tc' || cmd === '/buildingprivilege') {
       const next = !hasBuildingPrivilege;
       setHasBuildingPrivilege(next);
@@ -473,13 +543,32 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
             <span>Piso: {isOnFoundation ? (lang === 'pt-BR' ? 'Em Fundação' : 'On Foundation') : (lang === 'pt-BR' ? 'Solo / Grama' : 'Ground / Floor')}</span>
           </button>
 
-          <button
-            onClick={() => handleExecuteCommand('/gather_sim')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#0f1a12] hover:bg-[#16271a] border border-[#1e3422] text-[#b2c9b6] transition-colors cursor-pointer uppercase tracking-wider"
-          >
-            <Play className="w-3.5 h-3.5 text-[#22c55e]" />
-            <span>{lang === 'pt-BR' ? 'Simular Mineração' : 'Simulate Gather'}</span>
-          </button>
+          {/* Tool Mining Simulation Buttons */}
+          <div className="flex items-center gap-1 bg-[#09110b] p-0.5 border border-[#1e3422]">
+            <button
+              onClick={() => handleExecuteCommand('/minar jackhammer')}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold bg-[#142819] hover:bg-[#1e3c25] border border-[#235830] text-[#4ade80] transition-colors cursor-pointer"
+              title="Testar mineração de nó de pedra com Britadeira (100% de rendimento)"
+            >
+              <span>⚡ Britadeira (100%)</span>
+            </button>
+
+            <button
+              onClick={() => handleExecuteCommand('/minar metal')}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold bg-[#1a1b12] hover:bg-[#282a1a] border border-[#48401c] text-[#fbbf24] transition-colors cursor-pointer"
+              title="Testar mineração com Picareta de Metal (77.5% vanilla / 100% se forçado)"
+            >
+              <span>⛏️ Picareta Metal</span>
+            </button>
+
+            <button
+              onClick={() => handleExecuteCommand('/minar stone')}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-bold bg-[#151718] hover:bg-[#202426] border border-[#30363a] text-[#9ca3af] transition-colors cursor-pointer"
+              title="Testar mineração com Picareta de Pedra (64.5% vanilla / 100% se forçado)"
+            >
+              <span>🪨 Picareta Pedra</span>
+            </button>
+          </div>
 
           <button
             onClick={() => {
@@ -549,7 +638,7 @@ export const Simulator: React.FC<SimulatorProps> = ({ config, lang }) => {
           <div className="absolute bottom-20 left-4 w-96 max-w-[calc(100%-2rem)] flex flex-col gap-2 z-10 font-mono">
             {/* Quick Chips */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {['/kit', '/sethome base', '/home base', '/home', '/delhome base', '/tc', '/foundation', '/ad', '/rates'].map(cmd => (
+              {['/kit', '/home base', '/rates', '/minar jackhammer', '/minar metal', '/minar stone', '/minar rock', '/tc', '/ad'].map(cmd => (
                 <button
                   key={cmd}
                   onClick={() => handleExecuteCommand(cmd)}

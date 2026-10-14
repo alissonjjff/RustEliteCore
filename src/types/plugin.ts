@@ -45,6 +45,7 @@ export interface PluginConfig {
   // Parameters
   gatherMultiplier: number;
   vipGatherMultiplier: number;
+  enableFullGatherEfficiency?: boolean;
   maxHomesDefault: number;
   maxHomesVip: number;
   teleportCountdownSeconds: number;

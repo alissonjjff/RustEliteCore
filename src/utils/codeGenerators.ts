@@ -137,6 +137,9 @@ namespace Oxide.Plugins
 
             [JsonProperty("FundirMineriosAutomaticamente")]
             public bool AutoSmeltOres { get; set; } = ${config.enableAutoSmelt ? 'true' : 'false'};
+
+            [JsonProperty("ForcarEficienciaMaxima100Porcento")]
+            public bool FullGatherEfficiency { get; set; } = ${config.enableFullGatherEfficiency ? 'true' : 'false'};
         }` : ''}
 
         ${hasHomes ? `private class HomeSettings
@@ -683,22 +686,119 @@ namespace Oxide.Plugins
             SendReply(player, $"{_config.General.ChatPrefix} {GetMessage("AutoDoorToggled", player, status, data.AutoDoorDelay)}");
         }` : ''}
 
+        ${hasGather ? `[ChatCommand("rates")]
+        private void CmdRates(BasePlayer player, string command, string[] args)
+        {
+            if (!_config.General.EnableGather)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} O modulo de taxas de coleta esta desativado no servidor.");
+                return;
+            }
+
+            bool isAdmin = HasPermission(player, PermADMIN) || player.IsAdmin;
+
+            // Suporte para administradores alterarem as taxas e configs em tempo real sem precisar reiniciar
+            if (isAdmin && args.Length >= 2)
+            {
+                string subCmd = args[0].ToLowerInvariant();
+                if ((subCmd == "set" || subCmd == "padrao" || subCmd == "default") && float.TryParse(args[1], out float newRate))
+                {
+                    _config.Gather.DefaultMultiplier = Mathf.Max(1.0f, newRate);
+                    SaveConfig();
+                    SendReply(player, $"{_config.General.ChatPrefix} <color=#2ecc71>Sucesso!</color> Taxa padrao atualizada para <color=#f39c12>{_config.Gather.DefaultMultiplier}x</color> e salva no JSON.");
+                    return;
+                }
+                if ((subCmd == "vip") && float.TryParse(args[1], out float newVipRate))
+                {
+                    _config.Gather.VipMultiplier = Mathf.Max(1.0f, newVipRate);
+                    SaveConfig();
+                    SendReply(player, $"{_config.General.ChatPrefix} <color=#2ecc71>Sucesso!</color> Taxa VIP atualizada para <color=#f1c40f>{_config.Gather.VipMultiplier}x</color> e salva no JSON.");
+                    return;
+                }
+                if (subCmd == "efficiency" || subCmd == "eficiencia")
+                {
+                    string val = args[1].ToLowerInvariant();
+                    _config.Gather.FullGatherEfficiency = (val == "on" || val == "true" || val == "1" || val == "ativar");
+                    SaveConfig();
+                    string st = _config.Gather.FullGatherEfficiency ? "<color=#2ecc71>FORCADA 100% (Todas as ferramentas rendem 100% do no)</color>" : "<color=#e67e22>VANILLA PROGRESSIVO (Britadeira 100%, Picareta Metal 77.5%, Pedra 64.5%)</color>";
+                    SendReply(player, $"{_config.General.ChatPrefix} Eficiencia de ferramentas alterada para: {st} e salva no JSON.");
+                    return;
+                }
+                if (subCmd == "smelt" || subCmd == "autosmelt")
+                {
+                    string val = args[1].ToLowerInvariant();
+                    _config.Gather.AutoSmeltOres = (val == "on" || val == "true" || val == "1" || val == "ativar");
+                    SaveConfig();
+                    string st = _config.Gather.AutoSmeltOres ? "<color=#2ecc71>ATIVADA</color>" : "<color=#e74c3c>DESATIVADA</color>";
+                    SendReply(player, $"{_config.General.ChatPrefix} Fundicao automatica alterada para: {st} e salva no JSON.");
+                    return;
+                }
+            }
+
+            bool isVip = IsVip(player);
+            float currentRate = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
+            string statusVip = isVip ? "<color=#f1c40f>[VIP Ativo]</color>" : "<color=#7f8c8d>[Padrao]</color>";
+            string smeltStatus = _config.Gather.AutoSmeltOres ? "<color=#2ecc71>Ativado</color>" : "<color=#e74c3c>Desativado</color>";
+            string effStatus = _config.Gather.FullGatherEfficiency ? "<color=#2ecc71>Forcada 100%</color>" : "<color=#e67e22>Vanilla Progressivo (Padrao do Rust)</color>";
+
+            SendReply(player, $"{_config.General.ChatPrefix} <color=#3498db>=== TAXAS DE COLETA (GATHER RATES) ===</color>");
+            SendReply(player, $"{_config.General.ChatPrefix} Sua taxa atual: <color=#2ecc71>{currentRate}x</color> {statusVip}");
+            SendReply(player, $"{_config.General.ChatPrefix} Multiplicador: Padrao <color=#f39c12>{_config.Gather.DefaultMultiplier}x</color> | VIP <color=#f1c40f>{_config.Gather.VipMultiplier}x</color>");
+            SendReply(player, $"{_config.General.ChatPrefix} Eficiencia de Ferramentas: {effStatus}");
+            SendReply(player, $"{_config.General.ChatPrefix} Fundicao Automatica (Auto-Smelt): {smeltStatus}");
+            if (isAdmin)
+            {
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#7f8c8d>Comandos Admin ao vivo:</color>");
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#95a5a6>/rates set <1-20></color> | <color=#95a5a6>/rates vip <1-50></color>");
+                SendReply(player, $"{_config.General.ChatPrefix} <color=#95a5a6>/rates efficiency on/off</color> | <color=#95a5a6>/rates smelt on/off</color>");
+            }
+        }
+
+        [ChatCommand("taxas")]
+        private void CmdTaxas(BasePlayer player, string command, string[] args) => CmdRates(player, command, args);` : ''}
+
         #endregion
 
         #region Game Hooks & Mechanics
 
-        ${hasGather ? `// Multiplicador inteligente de coleta
-        private void OnDispenserGather(ResourceDispenser dispenser, BaseEntity entity, Item item)
+        ${hasGather ? `// Processador central de multiplicador e fundicao de itens de dispensers (arvores, minerios, animais)
+        private void ProcessDispenserItem(BasePlayer player, Item item)
         {
-            if (!_config.General.EnableGather) return;
-
-            BasePlayer player = entity as BasePlayer;
             if (player == null || item == null) return;
 
             bool isVip = IsVip(player);
             float multiplier = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
 
-            item.amount = (int)(item.amount * multiplier);
+            // Compensacao opcional de ferramentas para render 100% do no (evita perda nativa de picareta comum)
+            if (_config.Gather.FullGatherEfficiency && player.GetHeldEntity() != null)
+            {
+                string held = player.GetHeldEntity().ShortPrefabName?.ToLower() ?? "";
+                if (held.Contains("pickaxe") && !held.Contains("icepick") && !held.Contains("stone") && !held.Contains("jackhammer"))
+                {
+                    multiplier *= 1.29032f; // Picareta de Metal normal (77.5% -> 100%)
+                }
+                else if (held.Contains("stone_pickaxe") || held.Contains("stone.pickaxe"))
+                {
+                    multiplier *= 1.55038f; // Picareta de Pedra (64.5% -> 100%)
+                }
+                else if (held.Contains("rock"))
+                {
+                    multiplier *= 2.5f; // Pedra inicial (40% -> 100%)
+                }
+                else if (held.Contains("hatchet") && !held.Contains("stone"))
+                {
+                    multiplier *= 1.33333f; // Machado de metal (75% -> 100%)
+                }
+                else if (held.Contains("stonehatchet") || held.Contains("stone_hatchet"))
+                {
+                    multiplier *= 1.66666f; // Machado de pedra (60% -> 100%)
+                }
+            }
+
+            if (multiplier > 1.0f)
+            {
+                item.amount = (int)(item.amount * multiplier);
+            }
 
             // Fundicao automatica opcional
             if (_config.Gather.AutoSmeltOres)
@@ -711,6 +811,66 @@ namespace Oxide.Plugins
                 {
                     item.info = ItemManager.FindItemDefinition("sulfur");
                 }
+            }
+        }
+
+        // Multiplicador inteligente de coleta (arvores, pedras/minerios e animais - batidas regulares)
+        private void OnDispenserGather(ResourceDispenser dispenser, BaseEntity entity, Item item)
+        {
+            if (!_config.General.EnableGather) return;
+            BasePlayer player = entity as BasePlayer;
+            if (player == null) return;
+            ProcessDispenserItem(player, item);
+        }
+
+        // Multiplicador do BONUS FINAL de no de minerio e arvores (hotspot e quebra final do no)
+        // CRUCIAL: Sem este hook, o bonus final de 250 pedra saia em 1x vanilla (750x10=7500 + 250 = 7750)
+        private void OnDispenserBonus(ResourceDispenser dispenser, BasePlayer player, Item item)
+        {
+            if (!_config.General.EnableGather) return;
+            if (player == null) return;
+            ProcessDispenserItem(player, item);
+        }
+
+        // Multiplicador para recursos coletados do chao (pedras soltas, madeira, enxofre e tecido)
+        private void OnCollectiblePickup(Item item, BasePlayer player)
+        {
+            if (!_config.General.EnableGather) return;
+            if (player == null || item == null) return;
+
+            bool isVip = IsVip(player);
+            float multiplier = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
+
+            if (multiplier > 1.0f)
+            {
+                item.amount = (int)(item.amount * multiplier);
+            }
+
+            if (_config.Gather.AutoSmeltOres)
+            {
+                if (item.info.shortname == "metal.ore")
+                {
+                    item.info = ItemManager.FindItemDefinition("metal.fragments");
+                }
+                else if (item.info.shortname == "sulfur.ore")
+                {
+                    item.info = ItemManager.FindItemDefinition("sulfur");
+                }
+            }
+        }
+
+        // Multiplicador para colheita de plantas (tecido de hemp, aboboras, milho, bagas)
+        private void OnGrowableGathered(GrowableEntity plant, Item item, BasePlayer player)
+        {
+            if (!_config.General.EnableGather) return;
+            if (player == null || item == null) return;
+
+            bool isVip = IsVip(player);
+            float multiplier = isVip ? _config.Gather.VipMultiplier : _config.Gather.DefaultMultiplier;
+
+            if (multiplier > 1.0f)
+            {
+                item.amount = (int)(item.amount * multiplier);
             }
         }` : ''}
 
@@ -1003,7 +1163,8 @@ export function generatePluginConfigJson(config: PluginConfig): string {
     MultiplicadoresDeColeta: {
       MultiplicadorPadrao: config.gatherMultiplier,
       MultiplicadorVIP: config.vipGatherMultiplier,
-      FundirMineriosAutomaticamente: config.enableAutoSmelt
+      FundirMineriosAutomaticamente: config.enableAutoSmelt,
+      ForcarEficienciaMaxima100Porcento: config.enableFullGatherEfficiency === true
     },
     ConfiguracoesDeHomes: {
       MaximoHomesPadrao: config.maxHomesDefault,

@@ -20,6 +20,7 @@ export const PLUGIN_TEMPLATES: Record<string, PluginConfig> = {
 
     gatherMultiplier: 3.0,
     vipGatherMultiplier: 5.0,
+    enableFullGatherEfficiency: false,
     maxHomesDefault: 3,
     maxHomesVip: 6,
     teleportCountdownSeconds: 15,
