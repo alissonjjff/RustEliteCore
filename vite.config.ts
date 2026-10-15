@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/rust-plugin/', // 👈 CONFIGURADO COM O NOME EXATO DO SEU REPOSITÓRIO
+    base: '/RustEliteCore/', // 👈 CONFIGURADO COM O NOME EXATO DO SEU REPOSITÓRIO
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
